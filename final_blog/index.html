@@ -23,7 +23,7 @@
 		align-items: center;  /* Vertically centers the children in the container */
 	}
 	.main-content-block {
-		width: 80%; /* Change this percentage as needed */
+		width: 75%; /* Change this percentage as needed */
     	/*max-width: 1100px; /* Optional: Maximum width */
 		background-color: #fff;
 		/* border-left: 1px solid #DDD;
@@ -34,7 +34,7 @@
 	}
 	.margin-left-block {
 			font-size: 16px;
-			width: 20%; /* Change this percentage as needed */
+			width: 25%; /* Change this percentage as needed */
 			/*max-width: 130px; /* Optional: Maximum width */
 			position: relative;
 			margin-left: 10px;
@@ -74,7 +74,7 @@
 	}
 
 	h1 {
-		font-size: 18px;
+		font-size: 24px;
 		margin-top: 4px;
 		margin-bottom: 10px;
 		font-family: 'Open Sans', sans-serif;
@@ -225,8 +225,15 @@
 				<span class="nav-item"><a href="#motivation">Motivation</a></span>
 			    <span class="nav-item"><a href="#previous_work">Previous Work</a></span>
 				<span class="nav-item"><a href="#proposal">Proposal</a></span><br>
-				<a href="#does_x_do_y">Does X do Y?</a><br><br>
-				<a href="#implications_and_limitations">Implications and limitations</a><br><br>
+				<a href="#methods">Methods</a><br>
+				<span class="nav-item"><a href="#data">Data</a></span>
+			    <span class="nav-item"><a href="#architecture">Architecture</a></span>
+				<span class="nav-item"><a href="#basic_training">Basic Training</a></span>
+				<span class="nav-item"><a href="#task_specific_data_augmentation">Task-specific Data Augmentation</a></span>
+				<span class="nav-item"><a href="#evaluation">Evaluation</a></span><br>
+				<a href="#results">Results</a><br><br>
+				<a href="#discussion">Discussion</a><br><br>
+				<a href="#future_work_and_limitations">Future Work and Limitations</a><br><br>
           </div>
 			</div>
 		    <div class="main-content-block">
@@ -241,10 +248,30 @@
 		    <div class="main-content-block">
 				<h1>Introduction</h1>
 
-				<h2 id="motivation" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
+				<h2 id="motivation" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Motivation</h2>
 				<p>
-					Various approaches have been developed for solar radiation estimation. Classical methods like ray-tracing algorithms and radiosity models provide physically accurate results but are computationally expensive. Tools like Ladybug and Honeybee have made these simulations more accessible but still require simplified geometric inputs. Recent machine learning approaches have explored using convolutional neural networks for solar potential estimation, but most work with 2D raster data or require preprocessed mesh geometries. Few methods can directly process raw point cloud data while accounting for temporal variations in solar position and weather conditions throughout the year.
+					TODO: Why we need point in time radiation?
 				</p>
+				<p>
+					Basically soemthing like peak load for renewable energy fine time resolution estimation. Also motivates by some other stuff like estimate peak heat stress, urban microclimate etc. 
+				</p>
+
+				<h2 id="previous_work" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
+				<p>
+					TODO: What people are currently doing for point in time radiation estimation 
+				</p>
+				<p>
+					First say how people usually just use clean geometry (but lets say either it take incredible amount of time to clean the data or some may ignore complex geoemtry such as those from vegetation). Then say for lidar point cloud, or maybe dsm, how people currently doing the physical based estimation. Then say the limitation of physical based estimation (time consuming, not scalable, need to simplify geometry etc). Then say some recent work using learning based method for solar radiation estimation, but they mostly focus on annual or monthly scale.
+				</p>
+				<p>
+					TODO: Review something about the point cloud / 3D deep learning work towards other task (like segmentation, classification etc)
+				</p>
+				<p>
+					Summarize some of the recent work on point cloud deep learning. Do some review of the architecture, methods,.... 
+					Refer to RandLANet, PointNet ++, Point Transformer, and maybe some self-supervised learning method. Also NeRF related work.
+				</p>
+
+				<h2 id="proposal" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Proposal</h2>
 				<p>Estimating solar radiation on building surfaces  at fine temporal scales (hourly) is important for urban energy and renewable potentially analysis. Traditionally, this is done with physics-based simulation (ray-tracing, GIS tools like Ladybug/Honeybee), which can be computationally intensive for large city models and often require manual simplification of the input 3D geometries to be compatible with the simulation tools. Recent advances in machine learning have shown promise in approximating complex physical processes with data-driven surrogate models. In this study, we propose a deep learning approach to estimate hourly solar radiation on building surfaces using 3D city models and meteorological data as inputs.</p> 
 
 				<p>
@@ -255,11 +282,11 @@
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="does_x_do_y">
+		<div class="content-margin-container" id="methods">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-					<h1>Does X do Y?</h1>
+					<h1>Methods</h1>
 				  It is well known that Y does Y. And this has raised the question does X do Y? Because if Y does Y then it stands to reason that X does Y.
           But we cannot answer this until we realize the Z implies Y and X can be linked to Z.<br><br>
 
