@@ -253,26 +253,42 @@
 					TODO: Why we need point in time radiation?
 				</p>
 				<p>
-					Basically soemthing like peak load for renewable energy fine time resolution estimation. Also motivates by some other stuff like estimate peak heat stress, urban microclimate etc. 
+					(1) Basically soemthing like peak load for renewable energy fine time resolution estimation. Also motivates by some other stuff like estimate peak heat stress, urban microclimate etc. (2) The data is widely available (lidar, dsm, weather data etc). 
 				</p>
 
 				<h2 id="previous_work" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
 				<p>
-					TODO: What people are currently doing for point in time radiation estimation 
+					TODO: What people are currently doing related to this problem?
 				</p>
 				<p>
-					First say how people usually just use clean geometry (but lets say either it take incredible amount of time to clean the data or some may ignore complex geoemtry such as those from vegetation). Then say for lidar point cloud, or maybe dsm, how people currently doing the physical based estimation. Then say the limitation of physical based estimation (time consuming, not scalable, need to simplify geometry etc). Then say some recent work using learning based method for solar radiation estimation, but they mostly focus on annual or monthly scale.
+					(1) physical based, (a) common practice/industry practice - clean geometry, that does not handle the complex (b) on the research side, people use point cloud or dsm to do physical based simulation / estimation without the need for cleaning the geometry. 
+					(2) learning based - some recent work using learning based method for solar radiation estimation, but they mostly focus on annual or monthly scale.
+				</p>
+
+				<p>
+					TODO: WOrk in ML on point cloud in urban space understanding
 				</p>
 				<p>
-					TODO: Review something about the point cloud / 3D deep learning work towards other task (like segmentation, classification etc)
+					Point cloud encoders for spatial understanding
+
+					PointNet / PointNet++ — foundational to point cloud
+
+					RandLA-Net —  for large outdoor scenes segmentation, good at capturing local structure; widely used for urban-scale classification.
+
+					Point Transformer / PTv3 — attention-based, excels at capturing long-range occlusion patterns needed for radiation prediction.
+
+					Sparse voxel or octree networks (e.g., MinkowskiNet, spconv-based models) — efficient in large-scale 3D scenes.
 				</p>
 				<p>
-					Summarize some of the recent work on point cloud deep learning. Do some review of the architecture, methods,.... 
-					Refer to RandLANet, PointNet ++, Point Transformer, and maybe some self-supervised learning method. Also NeRF related work.
+					Visibility prediction / ray-based occlusion learning
+
+					(NeRV, ray classification networks, shadow detection networks) — relevant because solar radiation ≈ “sun visibility probability × intensity.”
+					
+					maybe other visibility work?
 				</p>
 
 				<h2 id="proposal" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Proposal</h2>
-				<p>Estimating solar radiation on building surfaces  at fine temporal scales (hourly) is important for urban energy and renewable potentially analysis. Traditionally, this is done with physics-based simulation (ray-tracing, GIS tools like Ladybug/Honeybee), which can be computationally intensive for large city models and often require manual simplification of the input 3D geometries to be compatible with the simulation tools. Recent advances in machine learning have shown promise in approximating complex physical processes with data-driven surrogate models. In this study, we propose a deep learning approach to estimate hourly solar radiation on building surfaces using 3D city models and meteorological data as inputs.</p> 
+				<p> Estimating solar radiation on building surfaces  at fine temporal scales (hourly) is important for urban energy and renewable potentially analysis. Traditionally, this is done with physics-based simulation (ray-tracing, GIS tools like Ladybug/Honeybee), which can be computationally intensive for large city models and often require manual simplification of the input 3D geometries to be compatible with the simulation tools. Recent advances in machine learning have shown promise in approximating complex physical processes with data-driven surrogate models. In this study, we propose a deep learning approach to estimate hourly solar radiation on building surfaces using 3D city models and meteorological data as inputs.</p> 
 
 				<p>
 					This is challenging because raw LiDAR/mesh data are uncleaned – they include millions of points with buildings, trees, noise – and the problem involves geometric occlusion (shadows) varying with time. 
