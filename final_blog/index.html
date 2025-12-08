@@ -2,6 +2,8 @@
 <head>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 
 <link rel="shortcut icon" href="images/icon.ico">
 <style type="text/css">
@@ -80,12 +82,16 @@
 		font-family: 'Open Sans', sans-serif;
 	}
 
+	p {
+		line-height: 1.25; /* Adjust the value as needed for desired spacing */
+	}
+
 	table.header {
     font-weight: 300;
     font-size: 17px;
     flex-grow: 1;
-		width: 70%;
-    max-width: calc(100% - 290px); /* Adjust according to the width of .paper-code-tab */
+		width: 80%;
+    max-width: calc(100% - 200px); /* Adjust according to the width of .paper-code-tab */
 	}
 	table td, table td * {
 	    vertical-align: middle;
@@ -181,10 +187,12 @@
 		margin: 12px 0 4px 15px; /* top right bottom left */
 	}
 
+	
+
 </style>
 
-	  <title>The Platonic Representation Hypothesis</title>
-      <meta property="og:title" content="The Platonic Representation Hypothesis" />
+	  <title>PointPROP</title>
+      <meta property="og:title" content="PointPROP: Parallel Ray Occlusion Prediction for Point Clouds" />
 			<meta charset="UTF-8">
   </head>
 
@@ -197,7 +205,7 @@
 						<table class="header" align=center>
 								<tr>
 									<td align=center colspan=4 style="padding-bottom:1em; padding-top:3em;">
-										<span style="font-size: 42px; font-family: 'Open Sans', sans-serif, monospace; font-weight: bold; /* Adds fallbacks */">TBD Our TITLE</span>
+										<span style="font-size: 42px; font-family: 'Open Sans', sans-serif, monospace; font-weight: bold; /* Adds fallbacks */">PointPROP: Parallel Ray Occlusion Prediction for Point Clouds</span>
 									</td>
 								</tr>
 								<tr>
@@ -225,7 +233,7 @@
 				<span class="nav-item"><a href="#motivation">Motivation</a></span>
 			    <span class="nav-item"><a href="#previous_work">Previous Work</a></span>
 				<span class="nav-item"><a href="#proposal">Proposal</a></span><br>
-				<a href="#methods">Methods</a><br>
+				<a href="#experiments">Experiments</a><br>
 				<span class="nav-item"><a href="#data">Data</a></span>
 			    <span class="nav-item"><a href="#architecture">Architecture</a></span>
 				<span class="nav-item"><a href="#basic_training">Basic Training</a></span>
@@ -250,12 +258,22 @@
 
 				<h2 id="motivation" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Motivation</h2>
 				<p>
-					TODO: Why we need point in time radiation?
+					The assessment of solar potential and shading is central to climate and energy research, supporting applications such as photovoltaic yield estimation and building energy simulation. While annual metrics are common, they miss critical temporal variation: sky conditions, and solar angles, affecting peak loads and hour-level PV output. Point-in-time radiation is therefore essential for capturing these dynamics.
+				<!-- </p>
+				<p> -->
+					Urban radiation analysis typically relies on 3D models constructed from GIS footprints and airborne LiDAR point clouds. GIS provides 2D building outlines, while LiDAR supplies dense 3D samples of surfaces. Combined, these datasets form the basis for physics-based simulations/analysis that evaluate how solar rays interact with surrounding geometry.
 				</p>
 				<p>
-					(1) Basically soemthing like peak load for renewable energy fine time resolution estimation. Also motivates by some other stuff like estimate peak heat stress, urban microclimate etc. (2) The data is widely available (lidar, dsm, weather data etc). 
+					However, relying on GIS-based surfaces and reconstructed geometries presents practical limitations: <span style=" background-color: #ededf3; padding: 3px 3px; border-radius: 4px; font-weight: 400;">(1)</span> Comprehensive coverage of spatial information cannot depend on GIS alone. <span style=" background-color: #ededf3; padding: 3px 3px; border-radius: 4px; font-weight: 400;">(2)</span> Converting raw LiDAR point clouds (rich but non-volumetric samples) into surface or volumetric geometry is computationally expensive and often fails on complex urban forms, sometimes requiring manual cleanup.  <span style=" background-color: #ededf3; padding: 3px 3px; border-radius: 4px; font-weight: 400;">(3)</span> Even after preprocessing, point-in-time ray-tracing remains slow and costly.
+				</p>
+				<p> 
+					Therefore, given the increasing availability of large-scale LiDAR data that provides rich 3D context, there is a need for methods that can directly leverage raw point clouds to estimate solar radiation efficiently at fine temporal scales. This project works towards this goal by developing a deep-learning-based surrogate model that predicts point-in-time parallel (assuming solar rays are parallel) ray occlusion from unprocessed urban LiDAR point clouds.
 				</p>
 
+				<p> 
+					We need to talk something more DL here. what are the DL questions we are trying to answer in this project.
+				</p>
+			
 				<h2 id="previous_work" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
 				<p>
 					TODO: What people are currently doing related to this problem?
@@ -283,30 +301,41 @@
 					Visibility prediction / ray-based occlusion learning
 
 					(NeRV, ray classification networks, shadow detection networks) — relevant because solar radiation ≈ “sun visibility probability × intensity.”
-					
+
 					maybe other visibility work?
 				</p>
 
 				<h2 id="proposal" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Proposal</h2>
-				<p> Estimating solar radiation on building surfaces  at fine temporal scales (hourly) is important for urban energy and renewable potentially analysis. Traditionally, this is done with physics-based simulation (ray-tracing, GIS tools like Ladybug/Honeybee), which can be computationally intensive for large city models and often require manual simplification of the input 3D geometries to be compatible with the simulation tools. Recent advances in machine learning have shown promise in approximating complex physical processes with data-driven surrogate models. In this study, we propose a deep learning approach to estimate hourly solar radiation on building surfaces using 3D city models and meteorological data as inputs.</p> 
-
 				<p>
-					This is challenging because raw LiDAR/mesh data are uncleaned – they include millions of points with buildings, trees, noise – and the problem involves geometric occlusion (shadows) varying with time. 
+					In short, we model this as a binary classification task and develop a surrogate model to approximate the occlusion-testing function, which determines, for each test point in \(\text{pts}_{\text{test}}\), whether a given \(\text{ray}\) is blocked by the surrounding context geometry \(\text{pts}_{\text{context}}\):
+				</p>
+				<p>
+					\[
+						f(\text{pts}_{\text{context}},\, \text{pts}_{\text{test}},\, \text{ray}) \; \in \; \{0,1\}^m
+					\]
+					where
+					\(\text{pts}_{\text{context}} \in \mathbb{R}^{n \times 3}\),
+					\(\text{pts}_{\text{test}} \in \mathbb{R}^{m \times 3}\), and
+					\(\text{ray} \in \mathbb{R}^3\).
 				</p>
 
 
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="methods">
+		<div class="content-margin-container" id="experiments">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-					<h1>Methods</h1>
-				  It is well known that Y does Y. And this has raised the question does X do Y? Because if Y does Y then it stands to reason that X does Y.
-          But we cannot answer this until we realize the Z implies Y and X can be linked to Z.<br><br>
-
-          Now let's write some math!<br>
+				<h1>Experiments</h1>
+				<h2 id="data" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Data</h2>
+				<p>
+					Urban-scale LiDAR point clouds (often containing billions of points) are partitioned into fixed-size blocks under computational constraints. From each block, we extract (1) context points, (2) test points, (3) a solar ray direction, and (4) binary occlusion labels indicating whether each test point is blocked along that ray. These components form the input–output pairs used to train our model.
+				</p>
+				<p>
+					In short, the ground truth is produced via voxelization of each point and a subsequent physics based simulation. Voxelization converts points into a three dimensional grid of cells, with each volumetric cell being solid or empty. Empty cells allow solar rays to pass through. 
+				</p>
+				  	
           <center>
             <math xmlns="http://www.w3.org/1998/Math/MathML">
               <mrow>
