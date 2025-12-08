@@ -377,7 +377,7 @@
 					For each context–test point pair, we run a point-in-time occlusion simulation for 512 uniformly sampled rays over the upper hemisphere, producing binary occlusion labels for every test point under each ray direction. To reduce directional and scene-specific overfitting, we randomly sample 16 rays per block during training. The final dataset contains 1,377 training samples, 393 validation samples, and 198 test samples, generated from 123 unique context–test block pairs.
 				</p>
 
-				<h2 id="architecture" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Architecture</h2>
+				<h2 id="architecture" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Overall Architecture</h2>
 				<p>
 					Our model follows a modular, encoder–classifier architecture designed to jointly reason over 3D geometry and solar direction. The point cloud encoder processes both the context cloud and the test-point cloud, producing latent representations that capture local structure, occluders, and spatial relationships relevant to ray–geometry interactions. In parallel, the ray vector is mapped into a learned embedding that serves as a directional conditioning signal. These three latent features (context, test points, and solar token) are then fused and passed to a classifier that predicts per-point occlusion.
 				</p>
@@ -401,10 +401,11 @@
 							We then implement two prediction heads: <br>
 							<ol>
 								<li>
-									The first is a lightweight MLP classifier that directly predicts per-point occlusion from the fused test-point features. We first extract the context features by applying mean pooling and max pooling over context-point features. The pooled features are concatenated and projected into a compact scene-level embedding, which is then broadcast to every test point. Each test-point feature is concatenated with this global context descriptor and passed through a small MLP to produce the final occlusion prediction.
+									The first model is a lightweight MLP that predicts per-point occlusion using globally pooled context features. Mean and max pooling are applied to the context features to form a compact scene-level embedding, which is broadcast to all test points and concatenated with their features before passing through a small MLP for prediction.
+									<!-- The first is a lightweight MLP classifier that directly predicts per-point occlusion from the fused test-point features. We first extract the context features by applying mean pooling and max pooling over context-point features. The pooled features are concatenated and projected into a compact scene-level embedding, which is then broadcast to every test point. Each test-point feature is concatenated with this global context descriptor and passed through a small MLP to produce the final occlusion prediction. -->
 								</li>
 								<li>
-									The second prediction head incorporates cross-attention between context and test points to enable more explicit geometric reasoning. Here, we treat the test-point features as queries and the fused context features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
+									The third prediction head incorporates cross-attention between context and test points to enable more explicit geometric reasoning. Here, we treat the test-point features as queries and the fused context features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
 								</li>
 							</ol>
 						</li>
@@ -412,9 +413,22 @@
 					</ul>
 				</div>		
 				
-				<h2 id="training" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Training</h2>
-				<p></p>
+				<h2 id="training" style="font-size:16px; margin-top:20px; margin-bottom:2px;">
+					Baseline Comparison
+				</h2>
+				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
+					Baseline Evaluation of Architectural Inductive Biases (Transformer vs. MLP, ± Fourier)
+				</p>
 
+				<h2 id="todo" style="font-size: 16px; margin-top: 20px; margin-bottom: 2px;">Capacity Analysis</h2>
+				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
+					Capacity and Resolution Analysis via Downsampling and Feature Reduction
+				</p>
+
+				<h2 id="todo" style="font-size: 16px; margin-top: 20px; margin-bottom: 2px;">Local Bias</h2>
+				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
+					Incorporating Local Geometric Bias for Fine-grained Accuracy
+				</p>
 
 				  	
 		    </div>
@@ -424,7 +438,7 @@
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-            <h1>Another section</h1>
+            <h1>Discussion</h1>
             In this section we embed a video:
 						<video class='my-video' loop autoplay muted style="width: 725px">
 								<source src="./images/mtsh.mp4" type="video/mp4">
