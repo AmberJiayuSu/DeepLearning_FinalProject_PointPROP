@@ -86,6 +86,12 @@
 		line-height: 1.25; /* Adjust the value as needed for desired spacing */
 	}
 
+	li{
+		margin-top: 4px;
+		margin-bottom: 6px;
+		line-height: 1.25; /* Adjust the value as needed for desired spacing */
+	}
+
 	table.header {
     font-weight: 300;
     font-size: 17px;
@@ -187,6 +193,13 @@
 		margin: 12px 0 4px 15px; /* top right bottom left */
 	}
 
+	.listing_items span {
+		background-color: #f1f1f6;
+		padding: 2px 2px;
+		border-radius: 6px;
+		font-weight: 400;
+	}
+
 	
 
 </style>
@@ -213,10 +226,10 @@
 								</tr>
 								<tr>
 										<td align=center>
-												<span style="font-size:17px"><a href="https://amberjiayusu.github.io">Amber Jiayu Su</a></span>
+												<span style="font-size:17px"><a target="_blank" href="https://amberjiayusu.github.io">Amber Jiayu Su</a></span>
 										</td>
 										<td align=center>
-												<span style="font-size:17px"><a href="https://www.linkedin.com/in/erickylecheung/">Eric Kyle Cheung</a></span>
+												<span style="font-size:17px"><a target="_blank" href="https://www.linkedin.com/in/erickylecheung/">Eric Kyle Cheung</a></span>
 										</td>
 								</tr>
 								
@@ -232,7 +245,7 @@
 				<a href="#intro">Introduction</a><br>
 				<span class="nav-item"><a href="#motivation">Motivation</a></span>
 			    <span class="nav-item"><a href="#previous_work">Previous Work</a></span>
-				<span class="nav-item"><a href="#proposal">Proposal</a></span><br>
+				<span class="nav-item"><a href="#task">Task</a></span><br>
 				<a href="#experiments">Experiments</a><br>
 				<span class="nav-item"><a href="#data">Data</a></span>
 			    <span class="nav-item"><a href="#architecture">Architecture</a></span>
@@ -264,38 +277,62 @@
 					Urban radiation analysis typically relies on 3D models constructed from GIS footprints and airborne LiDAR point clouds. GIS provides 2D building outlines, while LiDAR supplies dense 3D samples of surfaces. Combined, these datasets form the basis for physics-based simulations/analysis that evaluate how solar rays interact with surrounding geometry.
 				</p>
 				<p>
-					However, relying on GIS-based surfaces and reconstructed geometries presents practical limitations: <span style=" background-color: #ededf3; padding: 3px 3px; border-radius: 4px; font-weight: 400;">(1)</span> Comprehensive coverage of spatial information cannot depend on GIS alone. <span style=" background-color: #ededf3; padding: 3px 3px; border-radius: 4px; font-weight: 400;">(2)</span> Converting raw LiDAR point clouds (rich but non-volumetric samples) into surface or volumetric geometry is computationally expensive and often fails on complex urban forms, sometimes requiring manual cleanup.  <span style=" background-color: #ededf3; padding: 3px 3px; border-radius: 4px; font-weight: 400;">(3)</span> Even after preprocessing, point-in-time ray-tracing remains slow and costly.
+					However, relying on GIS-based surfaces and reconstructed geometries presents practical limitations: (1) Comprehensive coverage of spatial information cannot depend on GIS alone. (2) Converting raw LiDAR point clouds (rich but non-volumetric samples) into surface or volumetric geometry is computationally expensive and often fails on complex urban forms, sometimes requiring manual cleanup.  (3) Even after preprocessing, point-in-time ray-tracing remains slow and costly.
 				</p>
 				<p> 
-					Therefore, given the increasing availability of large-scale LiDAR data that provides rich 3D context, there is a need for methods that can directly leverage raw point clouds to estimate solar radiation efficiently at fine temporal scales. This project works towards this goal by developing a deep-learning-based surrogate model that predicts point-in-time parallel (assuming solar rays are parallel) ray occlusion from unprocessed urban LiDAR point clouds.
+					Therefore, given the increasing availability of large-scale LiDAR data that provides rich 3D context, there is a need for efficiently and directly leveraging raw point clouds to estimate solar radiation at fine temporal scales. This project works towards this by developing a deep-learning-based surrogate model that predicts point-in-time parallel (assuming solar rays are parallel) ray occlusion from unprocessed urban LiDAR point clouds.
+				</p>
+				<p>
+					Given the specificity of this task, we are trying to explore the overarching question:
+					<strong>
+						"How should we design the inductive biases of a neural surrogate model so that it can accurately approximate
+						a physically-defined, geometry-dependent function?"
+					</strong>
+					Unlike semantic tasks, directional occlusion is a physical mapping governed by local geometry, long-range interactions,
+					and directional constraints. The key challenge is determining which architectural inductive biases best capture these 
+					properties within a learnable surrogate model.
+				</p>
+				<p> 
+					As deep learning becomes increasingly integrated into physics-based surrogate modeling, our investigation aims to understand how architectural choices influence performance on a highly specific geometric–physical task. We hope that these insights can contribute to a broader discussion of how to design domain-appropriate inductive biases for physics-driven applications.
 				</p>
 
-				<p> 
-					We need to talk something more DL here. what are the DL questions we are trying to answer in this project.
-				</p>
 			
 				<h2 id="previous_work" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
 				<p>
-					TODO: What people are currently doing related to this problem?
+					Recent research has developed several <span style="font-weight: 500;">physical-based simulations or analytical methods</span> to estimate point-in-time parallel ray occlusion using raw point clouds. Bognár et. al. projected the points to a discretized skydome, and trained an SVM classifier to predict occlusion labels for each sky patch based on projected points <a href="#ref_1">[1]</a>. Su and Dogan developed a voxelization-based method that converts point clouds into volumetric grids, enabling efficient ray-voxel intersection tests for occlusion determination <a href="#ref_2">[2]</a>. These methods avoid explicit surface reconstruction but still require computationally intensive preprocessing steps and hand-crafted features, limiting scalability and generalization.
 				</p>
 				<p>
-					(1) physical based, (a) common practice/industry practice - clean geometry, that does not handle the complex (b) on the research side, people use point cloud or dsm to do physical based simulation / estimation without the need for cleaning the geometry. 
-					(2) learning based - some recent work using learning based method for solar radiation estimation, but they mostly focus on annual or monthly scale.
 				</p>
 
 				<p>
 					TODO: WOrk in ML on point cloud in urban space understanding
 				</p>
 				<p>
-					Point cloud encoders for spatial understanding
+					<span style="font-weight: 500;">Machine Learning for Point Cloud Understanding</span> has been approached through several encoder families, each offering different trade-offs in geometric fidelity, locality modeling, and scalability:<br>
+					<div class="listing_items">
+						<ul>
+							<li>
+								<span > MLP-based encoders</span> (PointNet, PointNet++) <br>
+								Operate directly on unordered point sets using shared MLPs and symmetric pooling to enforce permutation invariance; PointNet++ adds hierarchical neighborhoods for local structure.
+							</li>
 
-					PointNet / PointNet++ — foundational to point cloud
+							<li>
+								<span > Transformer-based encoders</span> (Point Transformer, Point-BERT).<br>
+								Use attention mechanisms to capture long-range interactions and context-aware features. These models achieve strong accuracy but may be computationally expensive for contexts containing large number of points.
+							</li>
 
-					RandLA-Net —  for large outdoor scenes segmentation, good at capturing local structure; widely used for urban-scale classification.
+							<li>
+								<span > Lightweight hierarchical encoders</span> (RandLA-Net). <br>
+								Use random down-sampling and local feature aggregation to efficiently process large numbers of points while preserving local geometric detail. This class is well-suited for large urban LiDAR datasets.
+							</li>
 
-					Point Transformer / PTv3 — attention-based, excels at capturing long-range occlusion patterns needed for radiation prediction.
+							<li>
+								<span > Autoencoder-style encoders</span> (Point-VAE, Point-MAE, Point-BERT pretraining). <br>
+								Learn a global latent representation by reconstructing the input point cloud. These models are effective for capturing scene-level structure and provide strong pretraining signals, but reconstruction-focused objectives focus more on semantic understanding than fine-grained geometric details needed for occlusion reasoning.
+							</li>
+						</ul>
+					</div>
 
-					Sparse voxel or octree networks (e.g., MinkowskiNet, spconv-based models) — efficient in large-scale 3D scenes.
 				</p>
 				<p>
 					Visibility prediction / ray-based occlusion learning
@@ -305,7 +342,7 @@
 					maybe other visibility work?
 				</p>
 
-				<h2 id="proposal" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Proposal</h2>
+				<h2 id="task" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Task</h2>
 				<p>
 					In short, we model this as a binary classification task and develop a surrogate model to approximate the occlusion-testing function, which determines, for each test point in \(\text{pts}_{\text{test}}\), whether a given \(\text{ray}\) is blocked by the surrounding context geometry \(\text{pts}_{\text{context}}\):
 				</p>
@@ -332,32 +369,54 @@
 				<p>
 					Urban-scale LiDAR point clouds (often containing billions of points) are partitioned into fixed-size blocks under computational constraints. From each block, we extract (1) context points, (2) test points, (3) a solar ray direction, and (4) binary occlusion labels indicating whether each test point is blocked along that ray. These components form the input–output pairs used to train our model.
 				</p>
+				<p> WE need some graph here </p>
 				<p>
-					In short, the ground truth is produced via voxelization of each point and a subsequent physics based simulation. Voxelization converts points into a three dimensional grid of cells, with each volumetric cell being solid or empty. Empty cells allow solar rays to pass through. 
+					The ground truth is produced via a previously developed voxelization approach, applied to each point and followed by a subsequent physics based simulation <a href="#ref_1">[1]</a>. Voxelization converts points into a three dimensional grid of cells, with each volumetric cell being solid or empty. Empty cells allow solar rays to pass through. 
 				</p>
+				<p>
+					For each context–test point pair, we run a point-in-time occlusion simulation for 512 uniformly sampled rays over the upper hemisphere, producing binary occlusion labels for every test point under each ray direction. To reduce directional and scene-specific overfitting, we randomly sample 16 rays per block during training. The final dataset contains 1,377 training samples, 393 validation samples, and 198 test samples, generated from 123 unique context–test block pairs.
+				</p>
+
+				<h2 id="architecture" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Architecture</h2>
+				<p>
+					Our model follows a modular, encoder–classifier architecture designed to jointly reason over 3D geometry and solar direction. The point cloud encoder processes both the context cloud and the test-point cloud, producing latent representations that capture local structure, occluders, and spatial relationships relevant to ray–geometry interactions. In parallel, the ray vector is mapped into a learned embedding that serves as a directional conditioning signal. These three latent features (context, test points, and solar token) are then fused and passed to a classifier that predicts per-point occlusion.
+				</p>
+				<div class ="listing_items"> 
+					<ul>
+						<li>
+							<span > Point Cloud Encoder </span><br>
+							Given the scale and density of the urban LiDAR blocks in our dataset, we adopt a RandLA-Net–style encoder, which offers an efficient hierarchical representation that preserves local geometric structure—critical for accurate ray–occlusion prediction. Because our task is not semantic segmentation, we discard RandLA-Net’s decoder and retain only the hierarchical feature extractor. Although transformer-based or generative encoders could also be applied, many are not benchmarked on large-scale urban LiDAR and require more evaluation effort; thus, we focus on the RandLA family for this project. <br>
+							The RandLA encoder operates through multiple hierarchical stages, each performing random sampling to reduce point count followed by Local Feature Aggregation (LFA), which aggregates geometric context from nearest neighbors using attentive pooling. This produces a multi-scale latent representation consisting of per-point features and their corresponding downsampled coordinates for both context and test point sets. <br>
+							Following the RandLA encoding, we process the downsampled coordinates using a shared positional MLP, optionally preceded by Fourier feature embedding. The resulting positional embeddings are then fused with the RandLA features (via addition), providing each point with both learned geometric features and explicit spatial encoding.
+						</li>
+
+						<li>
+							<span > Ray Encoder </span><br>
+							A simple MLP maps the 3D ray vector into the hidden-dimension embedding space, producing a solar token that captures directional information relevant to occlusion reasoning. Optional Fourier feature embedding with fewer frequencies than used for point positions can be applied to the ray vector prior to the MLP to enhance high-frequency directional encoding.
+						</li>
+
+						<li>
+							<span > Classification Head </span> <br>
+							After obtaining the context points and test points features (added positional embeddings and encoded features), and solar token, we fuse them to predict per-point occlusion. Specifically, we concatenate the solar token to the context features by broadcasting the solar token across all context points. Then we concatenate the context features with the solar token and pass through a simple fead forward MLP to produce fused context features. <br>
+							We then implement two prediction heads: <br>
+							<ol>
+								<li>
+									The first is a lightweight MLP classifier that directly predicts per-point occlusion from the fused test-point features. We first extract the context features by applying mean pooling and max pooling over context-point features. The pooled features are concatenated and projected into a compact scene-level embedding, which is then broadcast to every test point. Each test-point feature is concatenated with this global context descriptor and passed through a small MLP to produce the final occlusion prediction.
+								</li>
+								<li>
+									The second prediction head incorporates cross-attention between context and test points to enable more explicit geometric reasoning. Here, we treat the test-point features as queries and the fused context features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
+								</li>
+							</ol>
+						</li>
+
+					</ul>
+				</div>		
+				
+				<h2 id="training" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Training</h2>
+				<p></p>
+
+
 				  	
-          <center>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-              <mrow>
-                <mrow>
-                  <mo>&#x2202;</mo>
-                  <mi>y</mi>
-                </mrow>
-                <mo>/</mo>
-                <mrow>
-                  <mo>&#x2202;</mo>
-                  <mi>x</mi>
-                </mrow>
-              </mrow>
-              <mo>=</mo>
-              <mi>x</mi>
-            </math>
-          </center>
-          <br>
-          It's probably best to ask an LLM to help do the web
-          formatting for math. You can tell it "convert this latex equation into MathML: $$\frac{\partial dy}{\partial dx} = x$$"
-          But it took me a few tries. So, if you get frustrated, you can embed an image of the equation, or use other packages for
-          rendering equations on webpages.
 		    </div>
 		</div>
 
@@ -388,7 +447,8 @@
 		    <div class="main-content-block">
 						<div class='citation' id="references" style="height:auto"><br>
 							<span style="font-size:16px">References:</span><br><br>
-							<a id="ref_1"></a>[1] <a href="https://en.wikipedia.org/wiki/Allegory_of_the_cave">Allegory of the Cave</a>, Plato, c. 375 BC<br><br>
+							<a id="ref_1"></a>[1] <a target="_blank" href="https://doi.org/10.1080/19401493.2021.1971765">Calculating Solar Irradiance without Shading Geometry: a Point Cloud-based Method</a>, Bognár, Loonen, and Hensen, 2021<br><br>
+							<a id="ref_2"></a>[2] <a target="_blank" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5611022">Voxel Shader – An Efficient Shadow Calculation Approach For Urban Building Energy Modeling</a>, Su, and Dogan, 2025<br><br>
 							<a id="ref_2"></a>[2] <a href="">A Human-Level AGI</a>, OpenAI, 2025<br><br>
 						</div>
 		    </div>
