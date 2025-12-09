@@ -8,7 +8,7 @@
 <link rel="shortcut icon" href="images/icon.ico">
 <style type="text/css">
 	body {
-		background-color: #f4f4f5;
+		background-color: #e0e0df;
 	}
 
 	/* Hide both math displays initially, will display based on JS detection */
@@ -79,6 +79,13 @@
 		font-size: 24px;
 		margin-top: 4px;
 		margin-bottom: 10px;
+		font-family: 'Open Sans', sans-serif;
+	}
+
+	h2 {
+		font-size: 18px;
+		margin-top: 4px;
+		margin-bottom: 8px;
 		font-family: 'Open Sans', sans-serif;
 	}
 
@@ -248,8 +255,10 @@
 				<span class="nav-item"><a href="#task">Task</a></span><br>
 				<a href="#experiments">Experiments</a><br>
 				<span class="nav-item"><a href="#data">Data</a></span>
-			    <span class="nav-item"><a href="#architecture">Architecture</a></span>
-				<span class="nav-item"><a href="#basic_training">Basic Training</a></span>
+			    <span class="nav-item"><a href="#architecture">Overall Architecture</a></span>
+				<span class="nav-item"><a href="#baseline_comparison">Baseline Comparison</a></span>
+				<span class="nav-item"><a href="#capacity_analysis">Capacity Analysis</a></span>
+				<span class="nav-item"><a href="#local_bias">Local Bias</a></span>
 				<span class="nav-item"><a href="#task_specific_data_augmentation">Task-specific Data Augmentation</a></span>
 				<span class="nav-item"><a href="#evaluation">Evaluation</a></span><br>
 				<a href="#results">Results</a><br><br>
@@ -269,7 +278,7 @@
 		    <div class="main-content-block">
 				<h1>Introduction</h1>
 
-				<h2 id="motivation" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Motivation</h2>
+				<h2 id="motivation" style="margin-top: 20px; margin-bottom: 10px;">Motivation</h2>
 				<p>
 					The assessment of solar potential and shading is central to climate and energy research, supporting applications such as photovoltaic yield estimation and building energy simulation. While annual metrics are common, they miss critical temporal variation: sky conditions, and solar angles, affecting peak loads and hour-level PV output. Point-in-time radiation is therefore essential for capturing these dynamics.
 				<!-- </p>
@@ -297,7 +306,7 @@
 				</p>
 
 			
-				<h2 id="previous_work" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
+				<h2 id="previous_work" style="margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
 				<p>
 					Recent research has developed several <span style="font-weight: 500;">physical-based simulations or analytical methods</span> to estimate point-in-time parallel ray occlusion using raw point clouds. Bognár et. al. projected the points to a discretized skydome, and trained an SVM classifier to predict occlusion labels for each sky patch based on projected points <a href="#ref_1">[1]</a>. Su and Dogan developed a voxelization-based method that converts point clouds into volumetric grids, enabling efficient ray-voxel intersection tests for occlusion determination <a href="#ref_2">[2]</a>. These methods avoid explicit surface reconstruction but still require computationally intensive preprocessing steps and hand-crafted features, limiting scalability and generalization.
 				</p>
@@ -342,7 +351,7 @@
 					maybe other visibility work?
 				</p>
 
-				<h2 id="task" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Task</h2>
+				<h2 id="task" style="margin-top: 20px; margin-bottom: 10px;">Task</h2>
 				<p>
 					In short, we model this as a binary classification task and develop a surrogate model to approximate the occlusion-testing function, which determines, for each test point in \(\text{pts}_{\text{test}}\), whether a given \(\text{ray}\) is blocked by the surrounding context geometry \(\text{pts}_{\text{context}}\):
 				</p>
@@ -365,40 +374,54 @@
 				</div>
 		    <div class="main-content-block">
 				<h1>Experiments</h1>
-				<h2 id="data" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Data</h2>
+				<h2 id="data" style="margin-top: 20px; margin-bottom: 10px;">Data</h2>
 				<p>
-					Urban-scale LiDAR point clouds (often containing billions of points) are partitioned into fixed-size blocks under computational constraints. From each block, we extract (1) context points, (2) test points, (3) a solar ray direction, and (4) binary occlusion labels indicating whether each test point is blocked along that ray. These components form the input–output pairs used to train our model.
+					Urban-scale LiDAR point clouds (often containing billions of points) are partitioned into fixed-size sub-patches under computational constraints. From each sub-patch, we extract (1) context points, (2) test points, (3) a solar ray direction, and (4) binary occlusion labels indicating whether each test point is blocked along that ray. These components form the input–output pairs used to train our model.
 				</p>
 				<p> WE need some graph here </p>
 				<p>
 					The ground truth is produced via a previously developed voxelization approach, applied to each point and followed by a subsequent physics based simulation <a href="#ref_1">[1]</a>. Voxelization converts points into a three dimensional grid of cells, with each volumetric cell being solid or empty. Empty cells allow solar rays to pass through. 
 				</p>
 				<p>
-					For each context–test point pair, we run a point-in-time occlusion simulation for 512 uniformly sampled rays over the upper hemisphere, producing binary occlusion labels for every test point under each ray direction. To reduce directional and scene-specific overfitting, we randomly sample 16 rays per block during training. The final dataset contains 1,377 training samples, 393 validation samples, and 198 test samples, generated from 123 unique context–test block pairs.
+					For each context–test point pair, we run a point-in-time occlusion simulation for 512 rays uniformly sampled over the upper hemisphere, producing binary occlusion labels for every test point under each ray direction (1 for non-occluded, 0 for occluded). To reduce directional and scene-specific overfitting, we randomly sample 16 rays per block during training. The final dataset contains 1,377 training samples, 393 validation samples, and 198 test samples, generated from 123 unique context–test block pairs.
 				</p>
 
-				<h2 id="architecture" style="font-size: 16px; margin-top: 20px; margin-bottom: 10px;">Overall Architecture</h2>
+				<h2 id="architecture" style="margin-top: 20px; margin-bottom: 10px;">Overall Architecture</h2>
 				<p>
 					Our model follows a modular, encoder–classifier architecture designed to jointly reason over 3D geometry and solar direction. The point cloud encoder processes both the context cloud and the test-point cloud, producing latent representations that capture local structure, occluders, and spatial relationships relevant to ray–geometry interactions. In parallel, the ray vector is mapped into a learned embedding that serves as a directional conditioning signal. These three latent features (context, test points, and solar token) are then fused and passed to a classifier that predicts per-point occlusion.
 				</p>
 				<div class ="listing_items"> 
 					<ul>
 						<li>
-							<span > Point Cloud Encoder </span><br>
-							Given the scale and density of the urban LiDAR blocks in our dataset, we adopt a RandLA-Net–style encoder, which offers an efficient hierarchical representation that preserves local geometric structure—critical for accurate ray–occlusion prediction. Because our task is not semantic segmentation, we discard RandLA-Net’s decoder and retain only the hierarchical feature extractor. Although transformer-based or generative encoders could also be applied, many are not benchmarked on large-scale urban LiDAR and require more evaluation effort; thus, we focus on the RandLA family for this project. <br>
-							The RandLA encoder operates through multiple hierarchical stages, each performing random sampling to reduce point count followed by Local Feature Aggregation (LFA), which aggregates geometric context from nearest neighbors using attentive pooling. This produces a multi-scale latent representation consisting of per-point features and their corresponding downsampled coordinates for both context and test point sets. <br>
-							Following the RandLA encoding, we process the downsampled coordinates using a shared positional MLP, optionally preceded by Fourier feature embedding. The resulting positional embeddings are then fused with the RandLA features (via addition), providing each point with both learned geometric features and explicit spatial encoding.
+							<span > Point Cloud Encoder </span>
+							<p>
+								Given the scale and density of the urban LiDAR blocks in our dataset, we adopt a RandLA-Net–style encoder, which offers an efficient hierarchical representation that preserves local geometric structure—critical for accurate ray–occlusion prediction. Because our task is not semantic segmentation, we discard RandLA-Net’s decoder and retain only the hierarchical feature extractor. Although transformer-based or generative encoders could also be applied, many are not benchmarked on large-scale urban LiDAR and require more evaluation effort; thus, we focus on the RandLA family for this project. 
+							</p>
+							<p>
+								The RandLA encoder operates through multiple hierarchical stages, each performing random sampling to reduce point count followed by Local Feature Aggregation (LFA), which aggregates geometric context from nearest neighbors using attentive pooling. This produces a multi-scale latent representation consisting of per-point features and their corresponding downsampled coordinates for both context and test point sets.
+							</p>
+							<p>
+								Following the RandLA encoding, we process the downsampled coordinates using a shared positional MLP, optionally preceded by Fourier feature embedding. The resulting positional embeddings are then fused with the RandLA features (via addition), providing each point with both learned geometric features and explicit spatial encoding.
+							</p>
+							
 						</li>
 
 						<li>
-							<span > Ray Encoder </span><br>
-							A simple MLP maps the 3D ray vector into the hidden-dimension embedding space, producing a solar token that captures directional information relevant to occlusion reasoning. Optional Fourier feature embedding with fewer frequencies than used for point positions can be applied to the ray vector prior to the MLP to enhance high-frequency directional encoding.
+							<span > Ray Encoder </span>
+							<p>
+								A simple MLP maps the 3D ray vector into the hidden-dimension embedding space, producing a solar token that captures directional information relevant to occlusion reasoning. Optional Fourier feature embedding with fewer frequencies than used for point positions can be applied to the ray vector prior to the MLP to enhance high-frequency directional encoding.
+							</p>
+							
 						</li>
 
 						<li>
-							<span > Classification Head </span> <br>
-							After obtaining the context points and test points features (added positional embeddings and encoded features), and solar token, we fuse them to predict per-point occlusion. Specifically, we concatenate the solar token to the context features by broadcasting the solar token across all context points. Then we concatenate the context features with the solar token and pass through a simple fead forward MLP to produce fused context features. <br>
-							We then implement two prediction heads: <br>
+							<span > Classification Head </span> 
+							<p>
+								After obtaining the context points and test points features (added positional embeddings and encoded features), and solar token, we fuse them to predict per-point occlusion. Specifically, we concatenate the solar token to the context features by broadcasting the solar token across all context points. Then we concatenate the context features with the solar token and pass through a simple fead forward MLP to produce fused context features.
+							</p>
+							<p>
+								We then implement two prediction heads: 
+							</p>
 							<ol>
 								<li>
 									The first model is a lightweight MLP that predicts per-point occlusion using globally pooled context features. Mean and max pooling are applied to the context features to form a compact scene-level embedding, which is broadcast to all test points and concatenated with their features before passing through a small MLP for prediction.
@@ -411,21 +434,53 @@
 						</li>
 
 					</ul>
+					<p>We use binary cross-entropy loss to supervise the occlusion predictions against ground-truth labels.</p>
+						\[
+						\mathcal{L}_{\text{BCEWithLogits}}(x, y)
+						=
+						-\Big[
+						y \,\log \sigma(x)
+						+
+						(1 - y)\,\log\!\left(1 - \sigma(x)\right)
+						\Big]
+						\]
 				</div>		
 				
-				<h2 id="training" style="font-size:16px; margin-top:20px; margin-bottom:2px;">
+				<h2 id="baseline_comparison" style="margin-top:20px; margin-bottom:2px;">
 					Baseline Comparison
 				</h2>
-				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
+				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:2px;">
 					Baseline Evaluation of Architectural Inductive Biases (Transformer vs. MLP, ± Fourier)
 				</p>
+				<p><span style="font-weight: 500;">Set Up</span></p>
+				<p>
+				First, we establish a baseline comparison to examine the inductive biases of different architectural families. We evaluate transformer-based and MLP-based encoders, each tested with and without Fourier positional embeddings. This setup allows us to assess how these modeling choices affect the model’s ability to learn a geometry-dependent occlusion function. Transformers are expected to capture longer-range interactions and contextual relationships, whereas MLPs with global pooling primarily learn coarse global structure and are less effective at modeling fine geometric detail. Adding Fourier features introduces high-frequency positional encoding that can improve sensitivity to subtle geometric variations.
+				</p>
+				<p>
+				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. For comparison with spatially aware point-based architectures, we also include a RandLA-Net encoder with three layers and a downsampling ratio of 2 at each layer (8× total reduction), using a final feature dimension of 256.
+				</p>
+				<p>
+				All models are trained for 20 epochs with batch size 8 using the Adam optimizer (learning rate \(1\times10^{-4}\), weight decay \(1\times10^{-5}\)). A <code>ReduceLROnPlateau</code> scheduler (mode = "min") halves the learning rate when the validation loss does not improve for 5 epochs. We evaluate performance using accuracy, precision, recall, and F1-score on the validation and test sets.
+				</p>
+				<p><span style="font-weight: 500;">Results</span></p>
+				<figure style="text-align: center;">
+				<img src="./images/training_validation_loss_comparison.png" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves for the four model architectures.</figcaption>
+				</figure>
+				<p>
+				
 
-				<h2 id="todo" style="font-size: 16px; margin-top: 20px; margin-bottom: 2px;">Capacity Analysis</h2>
+
+
+				<h2 id="capacity_analysis" style="margin-top: 20px; margin-bottom: 2px;">Capacity Analysis</h2>
 				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
 					Capacity and Resolution Analysis via Downsampling and Feature Reduction
 				</p>
+				<p>
+				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. For comparison with spatially aware point-based architectures, we also include a RandLA-Net encoder with three layers and a downsampling ratio of 2 at each layer (8× total reduction), using a final feature dimension of 256.
+				</p>
 
-				<h2 id="todo" style="font-size: 16px; margin-top: 20px; margin-bottom: 2px;">Local Bias</h2>
+				<h2 id="local_bias" style="margin-top: 20px; margin-bottom: 2px;">Local Bias</h2>
 				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
 					Incorporating Local Geometric Bias for Fine-grained Accuracy
 				</p>
@@ -438,7 +493,7 @@
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-            <h1>Discussion</h1>
+            <h1>Another section</h1>
             In this section we embed a video:
 						<video class='my-video' loop autoplay muted style="width: 725px">
 								<source src="./images/mtsh.mp4" type="video/mp4">
