@@ -91,12 +91,19 @@
 
 	p {
 		line-height: 1.25; /* Adjust the value as needed for desired spacing */
+		margin-top: 0.8em;
+		margin-bottom: 0.8em;
+		font-size: 16px;
 	}
 
 	li{
 		margin-top: 4px;
 		margin-bottom: 6px;
 		line-height: 1.25; /* Adjust the value as needed for desired spacing */
+	}
+
+	th{
+		font-weight: 500;
 	}
 
 	table.header {
@@ -205,6 +212,7 @@
 		padding: 2px 2px;
 		border-radius: 6px;
 		font-weight: 400;
+		margin-bottom: 0;
 	}
 
 	
@@ -322,7 +330,7 @@
 						<ul>
 							<li>
 								<span > MLP-based encoders</span> (PointNet, PointNet++) <br>
-								Operate directly on unordered point sets using shared MLPs and symmetric pooling to enforce permutation invariance; PointNet++ adds hierarchical neighborhoods for local structure.
+								These models operate directly on unordered point sets by applying shared per-point MLPs followed by symmetric pooling operations to ensure permutation invariance. PointNet uses only global pooling to form a scene-level representation, whereas PointNet++ extends this framework with hierarchical neighborhood grouping and local shared-MLP aggregation to capture fine-grained geometric structure.
 							</li>
 
 							<li>
@@ -393,8 +401,8 @@
 				<div class ="listing_items"> 
 					<ul>
 						<li>
-							<span > Point Cloud Encoder </span>
 							<p>
+								<span > Point Cloud Encoder </span> <br>
 								Given the scale and density of the urban LiDAR blocks in our dataset, we adopt a RandLA-Net–style encoder, which offers an efficient hierarchical representation that preserves local geometric structure—critical for accurate ray–occlusion prediction. Because our task is not semantic segmentation, we discard RandLA-Net’s decoder and retain only the hierarchical feature extractor. Although transformer-based or generative encoders could also be applied, many are not benchmarked on large-scale urban LiDAR and require more evaluation effort; thus, we focus on the RandLA family for this project. 
 							</p>
 							<p>
@@ -407,16 +415,16 @@
 						</li>
 
 						<li>
-							<span > Ray Encoder </span>
 							<p>
+								<span > Ray Encoder </span> <br>
 								A simple MLP maps the 3D ray vector into the hidden-dimension embedding space, producing a solar token that captures directional information relevant to occlusion reasoning. Optional Fourier feature embedding with fewer frequencies than used for point positions can be applied to the ray vector prior to the MLP to enhance high-frequency directional encoding.
 							</p>
 							
 						</li>
 
 						<li>
-							<span > Classification Head </span> 
 							<p>
+								<span > Classification Head </span> <br>
 								After obtaining the context points and test points features (added positional embeddings and encoded features), and solar token, we fuse them to predict per-point occlusion. Specifically, we concatenate the solar token to the context features by broadcasting the solar token across all context points. Then we concatenate the context features with the solar token and pass through a simple fead forward MLP to produce fused context features.
 							</p>
 							<p>
@@ -424,7 +432,7 @@
 							</p>
 							<ol>
 								<li>
-									The first model is a lightweight MLP that predicts per-point occlusion using globally pooled context features. Mean and max pooling are applied to the context features to form a compact scene-level embedding, which is broadcast to all test points and concatenated with their features before passing through a small MLP for prediction.
+									The first model is a lightweight MLP that predicts per-point occlusion using globally pooled context features. We follow the PointNet paradigm of using symmetric global pooling to obtain a compact context descriptor. Specifically, mean and max pooling are applied to the context features to form a scene-level embedding, which is then broadcast to all test points. Each test-point feature is concatenated with this global descriptor and passed through a lightweight MLP to produce per-point occlusion predictions.
 									<!-- The first is a lightweight MLP classifier that directly predicts per-point occlusion from the fused test-point features. We first extract the context features by applying mean pooling and max pooling over context-point features. The pooled features are concatenated and projected into a compact scene-level embedding, which is then broadcast to every test point. Each test-point feature is concatenated with this global context descriptor and passed through a small MLP to produce the final occlusion prediction. -->
 								</li>
 								<li>
@@ -434,6 +442,8 @@
 						</li>
 
 					</ul>
+				</div>	
+					<p><span style="font-weight: 500;">Loss</span></p>
 					<p>We use binary cross-entropy loss to supervise the occlusion predictions against ground-truth labels.</p>
 						\[
 						\mathcal{L}_{\text{BCEWithLogits}}(x, y)
@@ -444,10 +454,10 @@
 						(1 - y)\,\log\!\left(1 - \sigma(x)\right)
 						\Big]
 						\]
-				</div>		
+					
 				
 				<h2 id="baseline_comparison" style="margin-top:20px; margin-bottom:2px;">
-					Baseline Comparison
+					1. Baseline Comparison
 				</h2>
 				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:2px;">
 					Baseline Evaluation of Architectural Inductive Biases (Transformer vs. MLP, ± Fourier)
@@ -463,27 +473,273 @@
 				All models are trained for 20 epochs with batch size 8 using the Adam optimizer (learning rate \(1\times10^{-4}\), weight decay \(1\times10^{-5}\)). A <code>ReduceLROnPlateau</code> scheduler (mode = "min") halves the learning rate when the validation loss does not improve for 5 epochs. We evaluate performance using accuracy, precision, recall, and F1-score on the validation and test sets.
 				</p>
 				<p><span style="font-weight: 500;">Results</span></p>
+				<p>
+					Figure X shows the training and validation loss trajectories for the four model architectures. Across all models, training loss decreases smoothly and validation loss remains generally aligned, indicating no severe overfitting within 20 epochs. Fourier features consistently improve convergence, particularly for the MLP, yielding lower loss compared to their non-Fourier counterparts. However, the Fourier embeddings also introduce noticeably higher variance in the validation loss, suggesting that the added high-frequency capacity makes the models more sensitive to noise and local fluctuations during training. Overall, MLP models converge marginally more smoothly and reliably than transformer-based models, and the MLP with Fourier features attains the lowest final loss.
+				</p>
 				<figure style="text-align: center;">
 				<img src="./images/training_validation_loss_comparison.png" width="80%" />
 				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves for the four model architectures.</figcaption>
 				</figure>
 				<p>
+					Table X. summarizes the test set performance across the four model configurations. Across all four configurations, precision, recall, and F1 are nearly identical, indicating that neither the architectural family nor positional encodings meaningfully alter the classification trade-offs. The models systematically yields high recall and moderate precision, suggesting a bias towards predicting non-occluded points. 
+				</p>
+				<div style="text-align: center; margin-top: 20px;">
+				<table 
+					style="
+						border-collapse: collapse; 
+						margin-left: auto; 
+						margin-right: auto; 
+						text-align: center; 
+						font-size: 15px; 
+						font-weight: 300;
+						border: 1.5px solid #000;
+					"
+				>
+					
+					<caption style="caption-side: bottom; ; margin-top: 8px;">
+						<span style="font-weight: 500;">Table X.</span>  Model Performance Comparison
+					</caption>
+
+					<thead>
+						<tr style="border-bottom: 1.5px solid #000;">
+							<th style="padding: 8px 20px;">Model</th>
+							<th style="padding: 8px 20px; border-right: 1px solid #000;"">Fourier</th>
+							<th style="padding: 8px 20px;">Accuracy</th>
+							<th style="padding: 8px 20px;">Precision</th>
+							<th style="padding: 8px 20px;">Recall</th>
+							<th style="padding: 8px 20px;">F1 Score</th>
+							<th style="padding: 8px 20px;"># Params</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<!-- MLP -->
+						<tr>
+							<td rowspan="2" style="font-weight: 500; padding: 8px 20px;">MLP</td>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">With</td>
+							<td style="padding: 8px 20px;">0.7462</td>
+							<td style="padding: 8px 20px;">0.7737</td>
+							<td style="padding: 8px 20px;">0.8672</td>
+							<td style="padding: 8px 20px;">0.8178</td>
+							<td style="padding: 8px 20px;">761,761</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">Without</td>
+							<td style="padding: 8px 20px;">0.7357</td>
+							<td style="padding: 8px 20px;">0.7523</td>
+							<td style="padding: 8px 20px;">0.8907</td>
+							<td style="padding: 8px 20px;">0.8157</td>
+							<td style="padding: 8px 20px;">758,305</td>
+						</tr>
+
+						<!-- Transformer -->
+						<tr>
+							<td rowspan="2" style="font-weight: 500; padding: 8px 20px;">Transformer</td>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">With</td>
+							<td style="padding: 8px 20px;">0.7360</td>
+							<td style="padding: 8px 20px;">0.7630</td>
+							<td style="padding: 8px 20px;">0.8675</td>
+							<td style="padding: 8px 20px;">0.8119</td>
+							<td style="padding: 8px 20px;">942,625</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">Without</td>
+							<td style="padding: 8px 20px;">0.7414</td>
+							<td style="padding: 8px 20px;">0.7657</td>
+							<td style="padding: 8px 20px;">0.8734</td>
+							<td style="padding: 8px 20px;">0.8160</td>
+							<td style="padding: 8px 20px;">939,169</td>
+						</tr>
+					</tbody>
+
+				</table>				
+			</div>
+			
+
+
 				
 
 
 
-				<h2 id="capacity_analysis" style="margin-top: 20px; margin-bottom: 2px;">Capacity Analysis</h2>
+				<h2 id="capacity_analysis" style="margin-top: 20px; margin-bottom: 2px;">2. Capacity Analysis</h2>
 				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
 					Capacity and Resolution Analysis via Downsampling and Feature Reduction
 				</p>
+				<p><span style="font-weight: 500;">Set Up</span></p>
 				<p>
-				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. For comparison with spatially aware point-based architectures, we also include a RandLA-Net encoder with three layers and a downsampling ratio of 2 at each layer (8× total reduction), using a final feature dimension of 256.
+					Since the initial experiments did not reveal meaningful differences between architectural families or the use of positional encodings, we hypothesize that the performance bottleneck lies not in the encoder choice itself but in the information loss introduced by the aggressive downsampling of the context point cloud. An overall reduction factor of 8× may remove fine-grained geometric structure that is critical for distinguishing visible from occluded points. At the same time, because this task does not require high-level semantic abstraction, the full representational capacity of the original RandLA-Net may be unnecessary. Reducing the feature dimensionality therefore serves two purposes: it probes our hypothesis that additional capacity does not materially improve performance, and it ensures the encoder remains space-efficient, which is critical given the high memory cost of point-cloud representations.
+				</p>
+				<p>
+					To evaluate whether model performance is constrained by insufficient geometric resolution or by excess representational capacity, we construct two controlled variants of the RandLA-Net encoder that differ systematically in depth, downsampling schedule, and feature dimensionality. These configurations allow us to disentangle the influence of spatial resolution from that of model capacity while respecting the computational and memory constraints inherent to point cloud models. Since the previous experiments showed Fourier features provided some benefits, we use MLP and transformer models with Fourier features as base configurations.
+				</p>
+				<p style="font-style: italic;"> 
+					Note: RandLA-Net expands the feature width within each layer, producing embeddings larger than the nominal dimension; in practice, the effective feature dimensions double relative to the configured outputs.
+				</p>
+				<div style="text-align: center; margin-top: 20px;">
+				<table 
+					style="
+					border-collapse: collapse;
+					margin-left: auto; 
+					margin-right: auto;
+					font-size: 15px;
+					font-weight: 300;
+					border: 1.5px solid #000;
+					text-align: center;
+					"
+				>
+					<caption style="caption-side: bottom; margin-top: 8px; ">
+						<span style="font-weight: 500;">
+						Table X. </span>Comparison of RandLA-Net Encoder Configurations
+					</caption>
+
+					<thead>
+					<tr style="border-bottom: 1.5px solid #000;">
+						<th style="padding: 8px 18px; border-right: 1px solid #000;">Configuration</th>
+						<th style="padding: 8px 18px;"># Layers</th>
+						<th style="padding: 8px 18px;">Subsampling Ratios</th>
+						<th style="padding: 8px 18px;">Overall Reduction</th>
+						<th style="padding: 8px 18px;">Feature Dimensions</th>
+						<th style="padding: 8px 18px;">Final Embedding</th>
+					</tr>
+					</thead>
+
+					<tbody>
+					<tr>
+						<td style="padding: 8px 18px; font-weight: 500; border-right: 1px solid #000;">Original Model</td>
+						<td style="padding: 8px 18px; ">3</td>
+						<td style="padding: 8px 18px;">[2, 2, 2]</td>
+						<td style="padding: 8px 18px;">8×</td>
+						<td style="padding: 8px 18px;">[16, 64, 128]</td>
+						<td style="padding: 8px 18px;">256</td>
+					</tr>
+
+					<tr>
+						<td style="padding: 8px 18px; font-weight: 500; border-right: 1px solid #000;">Shallow Model</td>
+						<td style="padding: 8px 18px;">2</td>
+						<td style="padding: 8px 18px;">[2, 2]</td>
+						<td style="padding: 8px 18px;">4×</td>
+						<td style="padding: 8px 18px;">[32, 64]</td>
+						<td style="padding: 8px 18px;">128</td>
+					</tr>
+					</tbody>
+				</table>
+				</div>
+				<p><span style="font-weight: 500;">Results</span></p>
+				<figure style="text-align: center;">
+				<img src="./images/training_validation_loss_comparison_2.png" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves for the different encoder configurations.</figcaption>
+				</figure>
+				<p>
+					Reducing the downsampling ratio has very different effects on the two encoder families. For the MLP encoder, providing more context points (4× vs. 8× downsampling) leads to smoother and more stable validation curves. Because the we explicitly used global pooling, its effective capacity remains limited regardless of input resolution, i.e. more points simply yield a more reliable global descriptor, making overfitting unlikely. In contrast, the transformer encoder becomes noticeably less stable at higher resolution: training loss continues to decrease while validation loss diverges. This reflects the fact that transformer cross-attention operates on local neighborhoods; increasing point density exposes the model to richer fine-grained geometric patterns and substantially increases its effective capacity, making it prone to memorizing local configurations rather than learning generalizable occlusion cues. Notably, reducing the feature dimensionality does not appear to harm performance for either architecture, further suggesting that the primary bottleneck lies in geometric information rather than representational capacity.
+				</p>
+				<div style="text-align: center; margin-top: 20px;">
+				<table 
+					style="
+						border-collapse: collapse; 
+						margin-left: auto; 
+						margin-right: auto; 
+						text-align: center; 
+						font-size: 15px; 
+						font-weight: 300;
+						border: 1.5px solid #000;
+					"
+				>
+					
+					<caption style="caption-side: bottom; ; margin-top: 8px;">
+						<span style="font-weight: 500;">Table X.</span>  Encoder Configuration Performance Comparison
+					</caption>
+
+					<thead>
+						<tr style="border-bottom: 1.5px solid #000;">
+							<th style="padding: 8px 20px;">Model</th>
+							<th style="padding: 8px 20px; border-right: 1px solid #000;"">Downsampling</th>
+							<th style="padding: 8px 20px;">Accuracy</th>
+							<th style="padding: 8px 20px;">Precision</th>
+							<th style="padding: 8px 20px;">Recall</th>
+							<th style="padding: 8px 20px;">F1 Score</th>
+							<th style="padding: 8px 20px;"># Params</th>
+							<th style="padding: 8px 20px;">Inference Latency (ms per sample)</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<!-- MLP -->
+						<tr>
+							<td rowspan="2" style="font-weight: 500; padding: 8px 20px;">MLP</td>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">8x</td>
+							<td style="padding: 8px 20px;">0.7462</td>
+							<td style="padding: 8px 20px;">0.7737</td>
+							<td style="padding: 8px 20px;">0.8672</td>
+							<td style="padding: 8px 20px;">0.8178</td>
+							<td style="padding: 8px 20px;">761,761</td>
+							<td style="padding: 8px 20px;">231.64</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">4x</td>
+							<td style="padding: 8px 20px;">0.7458</td>
+							<td style="padding: 8px 20px;">0.7743</td>
+							<td style="padding: 8px 20px;">0.8649</td>
+							<td style="padding: 8px 20px;">0.8171</td>
+							<td style="padding: 8px 20px;">478,305</td>
+							<td style="padding: 8px 20px;">184.59</td>
+						</tr>
+
+						<!-- Transformer -->
+						<tr>
+							<td rowspan="2" style="font-weight: 500; padding: 8px 20px;">Transformer</td>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">8x</td>
+							<td style="padding: 8px 20px;">0.7360</td>
+							<td style="padding: 8px 20px;">0.7630</td>
+							<td style="padding: 8px 20px;">0.8675</td>
+							<td style="padding: 8px 20px;">0.8119</td>
+							<td style="padding: 8px 20px;">942,625</td>
+							<td style="padding: 8px 20px;">231.32</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">4x</td>
+							<td style="padding: 8px 20px;">0.7277</td>
+							<td style="padding: 8px 20px;">0.7357</td>
+							<td style="padding: 8px 20px;">0.9133</td>
+							<td style="padding: 8px 20px;">0.8150</td>
+							<td style="padding: 8px 20px;">523,681</td>
+							<td style="padding: 8px 20px;">186.71</td>
+						</tr>
+					</tbody>
+
+				</table>				
+			</div>
+			<p>
+				Beyond accuracy, reducing the downsampling ratio and feature dimensionality yields meaningful efficiency gains. As shown in Table X, moving from 8× to 4× downsampling reduces parameter counts by around 40% for both architectures, with a corresponding decrease in inference latency from ~231 ms to ~185 ms per sample. While reducing downsampling increases the number of input points, the shallower architecture and lower feature dimensions more than compensate, resulting in a net efficiency improvement. As a result, the overall model becomes smaller and faster despite operating on a denser point cloud. While the results with 4x downsampling of MLP encoders are comparable to those with 8x downsampling, the efficiency gains and stability make this configuration more favorable in practice.
+			</p>
+				<p>
+					Additional experiments with more aggressive reductions in both downsampling ratio and feature dimensionality (not shown in Table X) were conducted to assess whether the MLP encoder could be pushed to an even more compact configuration. While the losses remain stable under these more extreme settings, its performance drops noticeably and does not reach the accuracy levels achievable at 4× downsampling. Therefore, we find this configuration to be a reasonable one that yields stable performance. 
 				</p>
 
-				<h2 id="local_bias" style="margin-top: 20px; margin-bottom: 2px;">Local Bias</h2>
+
+				<h2 id="local_bias" style="margin-top: 20px; margin-bottom: 2px;">3. Local Bias</h2>
 				<p style="font-size:16px; color:#666; margin-top:0; margin-bottom:10px;">
 					Incorporating Local Geometric Bias for Fine-grained Accuracy
 				</p>
+				<p>
+					Overall, these findings indicate that the 4×-downsampling configuration offers a favorable balance between accuracy, stability, and inference efficiency. At the same time, the experiments suggest the model still struggles to fully capture the local geometric patterns. While the global pooling strategy provides a robust scene-level descriptor and serves as a relibale regularizer to prevent overfitting, it is inherently the bottleneck of the model’s capacity to reason about fine-grained geometric structure. This is particularly important for occlusion reasoning, where local surface orientations, point distributions, and small-scale features can significantly influence visibility along a ray. Therefore, in this section, we introduce and explore a local pooling mechanism adapted from PointNet++ to enhance the model’s capacity to deal with local geometric variations.
+				</p>
+				<span style="font-weight: 500;">Set Up</span>
+				<p>
+					To overcome the limitations of purely global pooling, we augment the MLP encoder with a lightweight PointNet++ inspired local aggregation module. The key idea is to introduce a local point level net, while retaining the global context pooling.  
+				</p>
+				<p>
+					Specifically, after the context and test encoders produce feature–coordinate pairs <span style="white-space: nowrap;">\((\mathbf{f}_i^{\text{ctx}}, \mathbf{x}_i^{\text{ctx}})\)</span> and <span style="white-space: nowrap;">\((\mathbf{f}_j^{\text{test}}, \mathbf{x}_j^{\text{test}})\)</span>, (for test points, the final feature is the sum of the feature embedding and the positional encoding; for context points, we additionally fuse this representation with the ray embedding). We then construct a global branch by applying mean and max pooling over all solar-conditioned context features, followed by a linear projection, yielding a scene-level descriptor that is broadcast to all test points. 
+				</p>
+				<p>
+					In parallel, we introduce a local branch that follows the PointNet++ pattern of k-NN grouping, shared MLP, and symmetric pooling. For each test point <span style="white-space: nowrap;">\(\mathbf{x}_j^{\text{test}}\)</span>, we find its K nearest context points in Euclidean space, gather their features and coordinates, and compute relative positions <span style="white-space: nowrap;">\(\Delta \mathbf{x}_{jk} = \mathbf{x}_{k}^{\text{ctx}} - \mathbf{x}_{j}^{\text{test}}\)</span>. 
+					These offsets are linearly embedded into a hidden relative-position space and concatenated with the corresponding neighbor features. A shared MLP is then applied to these concatenated vectors to jointly encode the local information. Mean and max pooling over the K neighbors are subsequently applied, then following a linear projection, yielding a local descriptor for each test point.
+				</p>
+				<p>
+					The final representation for each test point is the concatenation of (1) its own test-point feature, (2) the local K-NN pooled feature, and (3) the broadcast global context feature. This combined descriptor is passed through a shallow MLP head to predict per-point occlusion logits.
+				</p>
+				<span style="font-weight: 500;">Results</span>
+
+
 
 				  	
 		    </div>
@@ -493,11 +749,8 @@
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-            <h1>Another section</h1>
-            In this section we embed a video:
-						<video class='my-video' loop autoplay muted style="width: 725px">
-								<source src="./images/mtsh.mp4" type="video/mp4">
-						</video>
+            <h1>Discussion</h1>
+            
 		    </div>
 		</div>
 
