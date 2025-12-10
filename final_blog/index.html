@@ -269,7 +269,7 @@
 				<span class="nav-item"><a href="#capacity_analysis">2-Capacity Analysis</a></span>
 				<span class="nav-item"><a href="#local_bias">3-Local Bias</a></span><br>
 				<a href="#discussion">Discussion</a><br><br>
-				<a href="#future_work_and_limitations">Implications and Limitations</a><br><br>
+				<a href="#limitations">Limitations</a><br><br>
 				<a href="#references">References</a><br><br>
           </div>
 			</div>
@@ -364,10 +364,10 @@
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="experiments">
+		<div class="content-margin-container" >
 				<div class="margin-left-block">
 				</div>
-		    <div class="main-content-block">
+		    <div class="main-content-block" id="experiments">
 				<h1>Experiments</h1>
 				<h2 id="data" style="margin-top: 20px; margin-bottom: 10px;">Data</h2>
 				<p>
@@ -465,7 +465,7 @@
 					Experiments
 				</h2>	
 				<p>
-					In the following section, we systematically evaluated which inductive biases matter for this task. Stage 1 compared architectural families (MLP vs. transformer) with and without Fourier transform in positional encoding. Stage 2 varied geometric resolution (8× → 4× downsampling) and feature dimension in RandLA-Net encoding. Stage 3 examined the effect of local neighborhood aggregation by introducing a PointNet++-style local feature pooling module into the MLP-based architecture.
+					In the following section, we systematically evaluate which inductive biases matter for this task. Stage 1 compares architectural families (MLP vs. transformer) with and without Fourier transform in positional encoding. Stage 2 varies geometric resolution (8× → 4× downsampling) and feature dimension in RandLA-Net encoding. Stage 3 examines the effect of local neighborhood aggregation by introducing a PointNet++-style local feature pooling module into the MLP-based architecture.
 				</p>
 				
 				<h2 id="baseline_comparison" style="margin-top:20px; margin-bottom:2px;">
@@ -476,10 +476,10 @@
 				</p>
 				<p><span style="font-weight: 500;">Set Up</span></p>
 				<p>
-				First, we establish a baseline comparison to examine the inductive biases of different architectural families. We evaluate transformer-based and MLP-based encoders, each tested with and without Fourier positional embeddings. This setup allows us to assess how these modeling choices affect the model’s ability to learn a geometry-dependent occlusion function. Transformers are expected to capture longer-range interactions and contextual relationships, whereas MLPs with global pooling primarily learn coarse global structure and are less effective at modeling fine geometric detail. Adding Fourier features introduces high-frequency positional encoding that can improve sensitivity to subtle geometric variations.
+				First, we establish a baseline comparison to examine the inductive biases of different architectural families. We evaluate transformer-based and MLP-based encoders, each tested with and without Fourier positional embeddings. Transformers are expected to capture longer-range interactions and contextual relationships, whereas MLPs with global pooling primarily learn coarse global structure and are less effective at modeling fine geometric detail. Adding Fourier features introduces high-frequency positional encoding that can improve sensitivity to subtle geometric variations.
 				</p>
 				<p>
-				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. The RandLA-Net encoder is initialized with 3 hierarchical layers, each with 2 down-sampling ratio, and feature dimensions [16, 64, 128] respectively. The Fourier feature embeddings use 10 frequencies for point positions and 4 frequencies for the ray vector.
+				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. The Fourier feature embeddings use 10 frequencies for point positions and 4 frequencies for the ray vector.
 				</p>
 				<p>
 				All models are trained for 20 epochs with batch size 8 using the Adam optimizer (learning rate \(1\times10^{-4}\), weight decay \(1\times10^{-5}\)). A <code>ReduceLROnPlateau</code> scheduler (mode = "min") halves the learning rate when the validation loss does not improve for 5 epochs. We evaluate performance using accuracy, precision, recall, and F1-score on the validation and test sets.
@@ -567,7 +567,7 @@
 				</table>				
 			</div>
 			<p>
-				Figure 7 shows one example from the test set, comparing ground-truth occlusion labels with the MLP model predictions (with Fourier features). Visually, the model captures the global occlusion patterns well, correctly identifying regional patterns. However, finer details are missed, such as the it predicts some small occluded clusters as a whole band of occuluded region. This suggests that while the model learns the overall geometry-dependent occlusion function, it struggles with fine-grained geometric reasoning, likely due to the aggressive downsampling and limited local context modeling inherent in the MLP architecture.
+				Figure 7 shows one example from the test set, comparing ground-truth occlusion labels with the MLP model predictions (with Fourier features). The model captures the global occlusion patterns well, correctly identifying regional patterns. However, finer details are missed. For example, it misclassifies small clusters of occluded points as entire edge regions of the roof.
 			</p>
 			<figure style="text-align: center;">
 			<img src="./images/samples_grid_basic_blog.png" width="80%" />
@@ -589,7 +589,7 @@
 					Since the initial experiments did not reveal meaningful differences between architectural families or the use of positional encodings, we hypothesize that the performance bottleneck lies not in the classifier architecture itself but in the information loss introduced by the aggressive downsampling of the context point cloud. An overall reduction factor of 8× may remove too much critical information. At the same time, because this task does not require high-level semantic abstraction, a large hidden dimension may be unnecessary. Reducing the feature dimensionality therefore serves two purposes: it probes our hypothesis that additional capacity does not improve performance, and it ensures the encoder remains space-efficient.
 				</p>
 				<p>
-					To evaluate whether model performance is constrained by insufficient geometric resolution, we construct two variants of the RandLA-Net encoder that differ in depth, downsampling schedule, and feature dimensionality. These configurations allow us to understand the influence of spatial resolution. Since the previous experiments showed Fourier features provided some benefits, we use MLP and transformer models with Fourier features as base configurations.
+					To evaluate whether model performance is constrained by the extent of downsampling, we construct two variants of the RandLA-Net encoder that differ in depth, downsampling ratios, and feature dimensionality. These configurations allow us to understand the influence of spatial resolution. Since the previous experiments showed Fourier features provided some benefits, we use MLP and transformer models with Fourier features as base configurations.
 				</p>
 				<p style="font-style: italic;"> 
 					Note: RandLA-Net expands the feature width within each layer, producing embeddings larger than the nominal dimension; in practice, the effective feature dimensions double relative to the configured outputs.
@@ -649,7 +649,7 @@
 				<figcaption><span style="font-weight: 500;">Figure 8.</span> Training and validation loss curves for the different encoder configurations.</figcaption>
 				</figure>
 				<p>
-					Reducing the downsampling ratio has very different effects on the two classification heads. For the MLP, providing more context points (4× vs. 8× downsampling) leads to smoother and more stable validation curves. Because the we explicitly used global pooling, its effective capacity remains limited regardless of input resolution, i.e. more points simply yield a more reliable global descriptor, making overfitting unlikely. In contrast, the transformer overfits: training loss continues to decrease while validation loss diverges. This reflects that increasing point density exposes the cross-attention to richer fine-grained geometric patterns, making it prone to memorizing local configurations rather than learning generalizable occlusion cues. Notably, reducing the feature dimensionality does not appear to harm performance for either architecture.
+					Reducing the downsampling ratio has very different effects on the two classification heads. For the MLP, providing more context points (4× vs. 8× downsampling) leads to smoother and more stable validation curves. Because we explicitly used global pooling, its effective capacity remains limited regardless of input resolution, i.e. more points simply yield a more reliable global descriptor, making overfitting unlikely. In contrast, the transformer overfits. This reflects that increasing point density exposes the cross-attention to richer fine-grained geometric patterns, making it prone to memorizing local configurations rather than learning generalizable occlusion cues. Notably, reducing the feature dimensionality does not appear to harm performance for either architecture.
 				</p>
 				<div style="text-align: center; margin-top: 20px;">
 				<table 
@@ -826,7 +826,7 @@
 				</table>				
 			</div>
 			<p>
-				We also report the testing performance in Table 4. Since architecturally-wise, we are only introducing one shared relative position projection and local point MLP, the parameter count remains nearly identical to the baseline MLP model. However, the addition of local pooling yields consistent improvements across all metrics. This confirms that incorporating local geometric context enhances the model’s ability without significantly increasing model complexity.
+				We also report the testing performance in Table 4. Since architecture-wise, we are only introducing one shared relative position projection and local point MLP, the parameter count remains nearly identical to the baseline MLP model. However, the addition of local pooling yields consistent improvements across all metrics. This confirms that incorporating local geometric context enhances the model’s ability without significantly increasing model complexity.
 			</p>
 			<figure style="text-align: center;">
 				<img src="./images/samples_grid_localPooling_blog.png" width="80%" />
@@ -849,31 +849,22 @@
 		    <div class="main-content-block">
             <h1>Discussion</h1>
 				<p>
-					A key insight from our experiments is that the strongest performance does not come from using the most expressive or capacity-heavy backbone, but from the delibrate design of inductive biases to reflect the physics of the task. The global-only model performs surprisingly well because it offers a stable, coarse summary of the entire scene while remaining simple enough to act as a regularizer, preventing the model from overfitting the fine-scale patterns in point clouds. 
+					How our experiments show that a more delibrate design of inductive biases reflecting the physics of the task can yield better results. The global-only model performs surprisingly well because it offers a stable, coarse summary of the entire scene while remaining simple enough to act as a regularizer, preventing the model from overfitting the fine-scale patterns in point clouds.
 				</p>
 				<p>
-					However, global pooling alone cannot capture the local geometric cues that fundamentally determine whether a ray intersects nearby surfaces. The local pooling module with a shared lightweight local feature extraction successfully fills this gap by providing targeted sensitivity towards neighborhood-scale geometry; while the global branch continues to provide the model with a broad contextual overview. This approach has shown to be more effective than introducing a more complex backbone such as transformers.
+					However, global pooling alone cannot capture the local geometric cues that fundamentally determine whether a ray intersects nearby surfaces. The local pooling module with a shared lightweight local feature extraction successfully fills this gap. This approach has shown to be more effective than introducing a more complex backbone such as transformers.
 				</p>
 				<p>
-					More broadly, in point-cloud tasks where both data density and memory footprint impose hard constraints, performance hinges on what geometric structure the model is biased to extract, than on raw representational power. Designing architectures that elevate the physically relevant aspects of the task, such as local occluders, directional relationships, multi-scale structure, should be higher priorities than simply scaling up model size or complexity.
+					More broadly, in point-cloud tasks where both data density and memory footprint impose hard constraints, performance hinges more on what geometric structure the model is biased to extract than on raw representational power. Designing architectures that elevate the physically relevant aspects of the task, such as local occluders, directional relationships, multi-scale structure, should be higher priorities than simply scaling up model size or complexity.
 				</p>
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="implications_and_limitations">
+		<div class="content-margin-container" id="limitations">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-						<h1>Implications and Limitations</h1>
-						<h2>
-							Implications
-						</h2>
-						<p>
-							From a deep learning perspective, these experiments demonstrate that carefully designed inductive biases are the key to learning physics-driven functions from real-world noisy data. By combining a lightweight global pooling branch and targeted local aggregation module that captures neighborhood-scale geometry, we show how to construct an efficient model that aligns with the underlying physics while remaining memory-feasible for urban-scale data. 	From an application standpoint, this work provides a practical pathway toward fast, point-in-time solar occlusion estimation without requiring expensive geometric reconstruction or heavy ray-tracing. This enables more scalable radiation analysis across cities and supports downstream workflows in PV potential mapping, shading assessment, and urban energy modeling.
-						</p>
-						<h2>
-							Limitations
-						</h2>
+						<h1>Limitations</h1>
 						<p>
 							Several limitations of the current study point toward important directions for future work. 
 						</p>
