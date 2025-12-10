@@ -317,11 +317,12 @@
 				<p>
 					Recent research has developed several physical-based simulations or analytical methods to estimate point-in-time parallel ray occlusion using raw point clouds. Bognár et. al. projected the points to a discretized skydome, and trained an SVM classifier to predict occlusion labels for each sky patch based on projected points <a href="#ref_1">[1]</a>. Su and Dogan developed a voxelization-based method that converts point clouds into volumetric grids, enabling efficient ray-voxel intersection tests for occlusion determination <a href="#ref_2">[2]</a>. These methods avoid explicit surface reconstruction but still require computationally intensive preprocessing steps and hand-crafted features, limiting scalability and generalization.
 				</p>
-				<span style="font-weight: 500; margin-bottom: 0;">ML-based Coarse Resolution Estimation </span>
+				<span style="font-weight: 500; margin-bottom: 0;">Deep Learning for Occulsion/Radiation</span>
 				<p>
+					Several recent works have applied deep learning to related tasks of radiation estimation and occlusion reasoning. Walch et. al. compared multiple models for predicting annual solar irradiation on building roofs given several roof characteristics. <a href="#ref_3">[3]</a>. Li et. al. proposed a graph neural network that models urban scenes as point clouds to estimate shading and radiation distribution, capturing local geometric context <a href="#ref_4">[4]</a>. However, these methods operate on some cleaned geometries or 2D representations, which still require significant preprocessing and do not directly address point-in-time occlusion from raw point clouds.
 				</p>
 
-				<span style="font-weight: 500; margin-bottom: 0;">Machine Learning for Point Cloud Understanding</span>
+				<span style="font-weight: 500; margin-bottom: 0;">Deep Learning for Point Cloud Understanding</span>
 				<p>
 					Machine Learning for Point Cloud Understanding has been approached through several encoder families, each offering different trade-offs in geometric fidelity, locality modeling, and scalability:<br>
 					<div class="listing_items">
