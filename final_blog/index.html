@@ -264,14 +264,12 @@
 				<a href="#experiments">Experiments</a><br>
 				<span class="nav-item"><a href="#data">Data</a></span>
 			    <span class="nav-item"><a href="#architecture">Overall Architecture</a></span>
-				<span class="nav-item"><a href="#baseline_comparison">Baseline Comparison</a></span>
-				<span class="nav-item"><a href="#capacity_analysis">Capacity Analysis</a></span>
-				<span class="nav-item"><a href="#local_bias">Local Bias</a></span>
-				<span class="nav-item"><a href="#task_specific_data_augmentation">Task-specific Data Augmentation</a></span>
-				<span class="nav-item"><a href="#evaluation">Evaluation</a></span><br>
-				<a href="#results">Results</a><br><br>
+				<span class="nav-item"><a href="#experiment">Experiments</a></span>
+				<span class="nav-item"><a href="#baseline_comparison">1-Baseline Comparison</a></span>
+				<span class="nav-item"><a href="#capacity_analysis">2-Capacity Analysis</a></span>
+				<span class="nav-item"><a href="#local_bias">3-Local Bias</a></span><br>
 				<a href="#discussion">Discussion</a><br><br>
-				<a href="#future_work_and_limitations">Future Work and Limitations</a><br><br>
+				<a href="#future_work_and_limitations">Implications and Limitations</a><br><br>
           </div>
 			</div>
 		    <div class="main-content-block">
@@ -315,17 +313,17 @@
 
 			
 				<h2 id="previous_work" style="margin-top: 20px; margin-bottom: 10px;">Previous Work</h2>
+				<span style="font-weight: 500; margin-bottom: 0;">Physical-based Simulations / Analytical Methods</span>
 				<p>
-					Recent research has developed several <span style="font-weight: 500;">physical-based simulations or analytical methods</span> to estimate point-in-time parallel ray occlusion using raw point clouds. Bognár et. al. projected the points to a discretized skydome, and trained an SVM classifier to predict occlusion labels for each sky patch based on projected points <a href="#ref_1">[1]</a>. Su and Dogan developed a voxelization-based method that converts point clouds into volumetric grids, enabling efficient ray-voxel intersection tests for occlusion determination <a href="#ref_2">[2]</a>. These methods avoid explicit surface reconstruction but still require computationally intensive preprocessing steps and hand-crafted features, limiting scalability and generalization.
+					Recent research has developed several physical-based simulations or analytical methods to estimate point-in-time parallel ray occlusion using raw point clouds. Bognár et. al. projected the points to a discretized skydome, and trained an SVM classifier to predict occlusion labels for each sky patch based on projected points <a href="#ref_1">[1]</a>. Su and Dogan developed a voxelization-based method that converts point clouds into volumetric grids, enabling efficient ray-voxel intersection tests for occlusion determination <a href="#ref_2">[2]</a>. These methods avoid explicit surface reconstruction but still require computationally intensive preprocessing steps and hand-crafted features, limiting scalability and generalization.
 				</p>
+				<span style="font-weight: 500; margin-bottom: 0;">ML-based Coarse Resolution Estimation </span>
 				<p>
 				</p>
 
+				<span style="font-weight: 500; margin-bottom: 0;">Machine Learning for Point Cloud Understanding</span>
 				<p>
-					TODO: WOrk in ML on point cloud in urban space understanding
-				</p>
-				<p>
-					<span style="font-weight: 500;">Machine Learning for Point Cloud Understanding</span> has been approached through several encoder families, each offering different trade-offs in geometric fidelity, locality modeling, and scalability:<br>
+					Machine Learning for Point Cloud Understanding has been approached through several encoder families, each offering different trade-offs in geometric fidelity, locality modeling, and scalability:<br>
 					<div class="listing_items">
 						<ul>
 							<li>
@@ -454,7 +452,12 @@
 						(1 - y)\,\log\!\left(1 - \sigma(x)\right)
 						\Big]
 						\]
-					
+				<h2 id="experiment" style="margin-top:20px; margin-bottom:2px;">
+					Experiments
+				</h2>	
+				<p>
+					In the following section, we systematically evaluated which inductive biases matter for learning point-in-time ray occlusion from raw urban LiDAR. Stage 1 compared architectural families (MLP vs. transformer) with and without Fourier features. Stage 2 varied geometric resolution (8× → 4× downsampling) and model capacity. Stage 3 introduced a PointNet++-inspired local pooling module on top of the global pooling based MLP.
+				</p>
 				
 				<h2 id="baseline_comparison" style="margin-top:20px; margin-bottom:2px;">
 					1. Baseline Comparison
@@ -554,6 +557,13 @@
 
 				</table>				
 			</div>
+			<p>
+				Figure X shows one example from the test set, comparing ground-truth occlusion labels with the MLP model predictions (with Fourier features). Visually, the model captures the global occlusion patterns well, correctly identifying regional patterns. However, finer details are missed, such as the it predicts some small occluded clusters as a whole band of occuluded region. This suggests that while the model learns the overall geometry-dependent occlusion function, it struggles with fine-grained geometric reasoning, likely due to the aggressive downsampling and limited local context modeling inherent in the MLP architecture.
+			</p>
+			<figure style="text-align: center;">
+			<img src="./images/samples_grid_basic_blog.png" width="80%" />
+			<figcaption><span style="font-weight: 500;">Figure X.</span> Testing Example with MLP + Fourier</figcaption>
+			</figure>
 			
 
 
@@ -680,7 +690,7 @@
 							<td style="padding: 8px 20px;">0.7743</td>
 							<td style="padding: 8px 20px;">0.8649</td>
 							<td style="padding: 8px 20px;">0.8171</td>
-							<td style="padding: 8px 20px;">478,305</td>
+							<td style="padding: 8px 20px;">204,257</td>
 							<td style="padding: 8px 20px;">184.59</td>
 						</tr>
 
@@ -701,7 +711,7 @@
 							<td style="padding: 8px 20px;">0.7357</td>
 							<td style="padding: 8px 20px;">0.9133</td>
 							<td style="padding: 8px 20px;">0.8150</td>
-							<td style="padding: 8px 20px;">523,681</td>
+							<td style="padding: 8px 20px;">249,633</td>
 							<td style="padding: 8px 20px;">186.71</td>
 						</tr>
 					</tbody>
@@ -709,10 +719,17 @@
 				</table>				
 			</div>
 			<p>
-				Beyond accuracy, reducing the downsampling ratio and feature dimensionality yields meaningful efficiency gains. As shown in Table X, moving from 8× to 4× downsampling reduces parameter counts by around 40% for both architectures, with a corresponding decrease in inference latency from ~231 ms to ~185 ms per sample. While reducing downsampling increases the number of input points, the shallower architecture and lower feature dimensions more than compensate, resulting in a net efficiency improvement. As a result, the overall model becomes smaller and faster despite operating on a denser point cloud. While the results with 4x downsampling of MLP encoders are comparable to those with 8x downsampling, the efficiency gains and stability make this configuration more favorable in practice.
+				Beyond accuracy, reducing the downsampling ratio and feature dimensionality yields meaningful efficiency gains. As shown in Table X, moving from 8× to 4× downsampling reduces parameter counts by around 40% for both architectures, with a corresponding decrease in inference latency from ~231 ms to ~185 ms per sample (measured on a Google Colab L4 GPU). While reducing downsampling increases the number of input points, the shallower architecture and lower feature dimensions more than compensate, resulting in a net efficiency improvement. As a result, the overall model becomes smaller and faster despite operating on a denser point cloud. While the results with 4x downsampling of MLP encoders are comparable to those with 8x downsampling, the efficiency gains and stability make this configuration more favorable in practice.
 			</p>
 				<p>
 					Additional experiments with more aggressive reductions in both downsampling ratio and feature dimensionality (not shown in Table X) were conducted to assess whether the MLP encoder could be pushed to an even more compact configuration. While the losses remain stable under these more extreme settings, its performance drops noticeably and does not reach the accuracy levels achievable at 4× downsampling. Therefore, we find this configuration to be a reasonable one that yields stable performance. 
+				</p>
+				<figure style="text-align: center;">
+				<img src="./images/samples_grid_4downsample_blog.png" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure X.</span> Testing Example with MLP 4x Downsampling</figcaption>
+				</figure>
+				<p>
+					We visualize the same test example from earlier in Figure X now with MLP with 4x downsampling ratio. Though it still struggles with local patterns, the confidence of the false negative is noticeably lower as indicated in the probability map. This suggests that the model is better able to capture local geometric cues that influence occlusion, even if it does not fully resolve all fine-grained details. 
 				</p>
 
 
@@ -738,6 +755,79 @@
 					The final representation for each test point is the concatenation of (1) its own test-point feature, (2) the local K-NN pooled feature, and (3) the broadcast global context feature. This combined descriptor is passed through a shallow MLP head to predict per-point occlusion logits.
 				</p>
 				<span style="font-weight: 500;">Results</span>
+				<figure style="text-align: center;">
+				<img src="./images/training_validation_loss_comparison_final.png" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves with vs without local pooling.</figcaption>
+				</figure>
+				<p>
+					Noticeably, by introducing local pooling, the model achieves smoother and much lower training and validation loss curves, as shown in Figure X. The local aggregation allows the model to better capture fine-grained geometric patterns that influence occlusion than relying on global features along. This leads to more stable learning dynamics and improved generalization, as evidenced by the lower validation loss throughout training.
+				</p>
+				
+				<div style="text-align: center; margin-top: 20px;">
+				<table 
+					style="
+						border-collapse: collapse; 
+						margin-left: auto; 
+						margin-right: auto; 
+						text-align: center; 
+						font-size: 15px; 
+						font-weight: 300;
+						border: 1.5px solid #000;
+					"
+				>
+					
+					<caption style="caption-side: bottom; ; margin-top: 8px;">
+						<span style="font-weight: 500;">Table X.</span>  Local Pooling Performance Comparison
+					</caption>
+
+					<thead>
+						<tr style="border-bottom: 1.5px solid #000;">
+							<th style="padding: 8px 20px;  border-right: 1px solid #000;">Model</th>
+							<th style="padding: 8px 20px;">Accuracy</th>
+							<th style="padding: 8px 20px;">Precision</th>
+							<th style="padding: 8px 20px;">Recall</th>
+							<th style="padding: 8px 20px;">F1 Score</th>
+							<th style="padding: 8px 20px;"># Params</th>
+							<th style="padding: 8px 20px;">Inference Latency (ms per sample)</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<!-- MLP -->
+						<tr>
+							<td  style="padding: 8px 20px; border-right: 1px solid #000;">MLP with Global Pooling</td>
+							<td style="padding: 8px 20px;">0.7458</td>
+							<td style="padding: 8px 20px;">0.7743</td>
+							<td style="padding: 8px 20px;">0.8649</td>
+							<td style="padding: 8px 20px;">0.8171</td>
+							<td style="padding: 8px 20px;">204,257</td>
+							<td style="padding: 8px 20px;">184.59</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 20px; border-right: 1px solid #000;">MLP with Global and Local Pooling</td>
+							<td style="padding: 8px 20px;">0.8320</td>
+							<td style="padding: 8px 20px;">0.8516</td>
+							<td style="padding: 8px 20px;">0.9011</td>
+							<td style="padding: 8px 20px;">0.8757</td>
+							<td style="padding: 8px 20px;">266,337</td>
+							<td style="padding: 8px 20px;">184.07</td>
+						</tr>
+
+					</tbody>
+
+				</table>				
+			</div>
+			<p>
+				We also report the testing performance in Table X. Since architecturally-wise, we are only introducing one shared relative position projection and local point MLP, the parameter count remains nearly identical to the baseline MLP model. However, the addition of local pooling yields consistent improvements across all metrics, including accuracy, precision, recall, and F1-score. This confirms that incorporating local geometric context enhances the model’s ability to reason about occlusion, leading to more accurate predictions without significantly increasing model complexity.
+			</p>
+			<figure style="text-align: center;">
+				<img src="./images/samples_grid_localPooling_blog.png" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves with vs without local pooling.</figcaption>
+				</figure>
+			<p>
+				Looking at the same test example in Figure X, we see that the model with local pooling recovers much finer details in the occlusion patterns. Many of the small occluded clusters that were previously misclassified are now correctly identified, and the overall confidence map appears much sharper and more precise. The probability map shows higher confidence in both occluded and non-occluded regions, indicating that the model is more certain about its predictions. This demonstrates that the local pooling mechanism effectively enhances the model’s sensitivity to fine-grained geometric cues that are critical for accurate occlusion reasoning.
+			</p>
+				
 
 
 
@@ -750,7 +840,15 @@
 				</div>
 		    <div class="main-content-block">
             <h1>Discussion</h1>
-            
+				<p>
+					A key insight from our experiments is that the strongest performance does not come from using the most expressive or capacity-heavy backbone, but from structuring the model so that its inductive biases reflect the physics of the task. The global-only model performs surprisingly well because it offers a stable, coarse summary of the entire scene while remaining simple enough to act as a regularizer, preventing the model from overfitting the highly irregular fine-scale patterns in point clouds. 
+				</p>
+				<p>
+					However, global pooling alone cannot capture the local geometric cues that fundamentally determine whether a ray intersects nearby surfaces. The local pooling module succeeds because it adds precisely the missing part: a lightweight, shared, spatially grounded representation of neighborhood-scale geometry, while the global branch continues to anchor the model with a broad contextual overview. This balance—global regularization plus local geometric sensitivity which appears far more important than maximizing parameter count or adopting a more complex architecture like a transformer. 
+				</p>
+				<p>
+					More broadly, in point-cloud tasks where both data density and memory footprint impose hard constraints, performance hinges on what geometric structure the model is biased to extract, not on raw representational power. Designing architectures that elevate the physically relevant aspects of the task, such as local occluders, directional relationships, multi-scale structure, should be higher priorities than simply scaling up model size or complexity.
+				</p>
 		    </div>
 		</div>
 
@@ -758,8 +856,31 @@
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-						<h1>Implications and limitations</h1>
-						Let's end with some discussion of the implications and limitations.
+						<h1>Implications and Limitations</h1>
+						<h2>
+							Implications
+						</h2>
+						<p>
+							From a deep learning perspective, these experiments demonstrate that carefully designed inductive biases—not larger or more complex backbones—are the key to learning fine-grained, physics-driven functions directly from large, noisy point clouds. By combining a lightweight global pooling branch that stabilizes learning with a targeted local aggregation module that captures neighborhood-scale geometry, we show how to construct an efficient surrogate model that aligns with the underlying ray-occlusion physics while remaining memory-feasible for urban-scale data. 
+						</p>
+						<p>
+							From an application standpoint, this work provides a practical pathway toward fast, point-in-time solar occlusion estimation without requiring expensive geometric reconstruction or heavy ray-tracing. This enables more scalable radiation analysis across cities and supports downstream workflows in PV potential mapping, shading assessment, and urban energy modeling—tasks that increasingly demand fine temporal resolution but are constrained by the computational cost of traditional simulation pipelines.
+						</p>
+						<h2>
+							Limitations
+						</h2>
+						<p>
+							Several limitations of the current study point toward important directions for future work. 
+						</p>
+						<p>
+							First, although we systematically explored architectural families, downsampling ratios, and local–global fusion, many other design parameters remain untested, such as alternative neighborhood definitions, different positional encodings, or more advanced context–test interaction mechanisms. These choices likely matter, but the search space is too large to fully explore within the scope of this project. 
+						</p>
+						<p>
+							Second, because point-cloud models are extremely memory-intensive, an essential challenge is developing architectures that remain lightweight without sacrificing task-specific capacity. Our current design borrows standard point-cloud operations (RandLA-style sampling, PointNet++ grouping), but these may not be optimal for large urban scenes; future models need more deliberate architectural efficiency rather than simply adapting existing modules. 
+						</p>
+						<p>
+							Third, the training data, while large, may not be diverse enough to cover the real-world simulation, as they come from a narrow set of urban contexts with similar point densities and acquisition characteristics. This limits the model’s ability to generalize to different cities, scanning conditions, or more varied geometric environments. Finally, the ground-truth occlusion labels themselves arise from a voxelization-based simulation that introduces noise and discretization errors. Understanding how to make the surrogate robust to noisy labels, or how to design a data generation pipeline that provides more reliable fine-scale supervision, remains an open problem.
+						</p>
 		    </div>
 		</div>
 
