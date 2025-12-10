@@ -270,11 +270,12 @@
 				<span class="nav-item"><a href="#local_bias">3-Local Bias</a></span><br>
 				<a href="#discussion">Discussion</a><br><br>
 				<a href="#future_work_and_limitations">Implications and Limitations</a><br><br>
+				<a href="#references">References</a><br><br>
           </div>
 			</div>
 		    <div class="main-content-block">
             <!--You can embed an image like this:-->
-            <img src="./images/your_image_here.png" width=512px/>
+            <img src="./images/Maingif.gif" width=70%/>
 		    </div>
 		</div>
 
@@ -319,7 +320,7 @@
 				</p>
 				<span style="font-weight: 500; margin-bottom: 0;">Deep Learning for Occulsion/Radiation</span>
 				<p>
-					Several recent works have applied deep learning to related tasks of radiation estimation and occlusion reasoning. Walch et. al. compared multiple models for predicting annual solar irradiation on building roofs given several roof characteristics. <a href="#ref_3">[3]</a>. Li et. al. proposed a graph neural network that models urban scenes as point clouds to estimate shading and radiation distribution, capturing local geometric context <a href="#ref_4">[4]</a>. However, these methods operate on some cleaned geometries or 2D representations, which still require significant preprocessing and do not directly address point-in-time occlusion from raw point clouds.
+					Several recent works have applied deep learning to related tasks of radiation estimation and occlusion reasoning. Walch et. al. compared multiple models for predicting annual solar irradiation on building roofs given several roof characteristics. <a href="#ref_3">[3]</a>. Mo et. al. proposed a CNN-based method to identify rooftop occlusions from satellite imagery <a href="#ref_4">[4]</a>. However, these methods operate on some cleaned geometries or 2D representations, which still require significant preprocessing and do not directly address point-in-time occlusion from raw point clouds.
 				</p>
 
 				<span style="font-weight: 500; margin-bottom: 0;">Deep Learning for Point Cloud Understanding</span>
@@ -328,34 +329,27 @@
 					<div class="listing_items">
 						<ul>
 							<li>
-								<span > MLP-based encoders</span> (PointNet, PointNet++) <br>
+								<span > MLP-based encoders</span> (PointNet <a href="#ref_5">[5]</a>, PointNet++ <a href="#ref_6">[6]</a>) <br>
 								These models operate directly on unordered point sets by applying shared per-point MLPs followed by symmetric pooling operations to ensure permutation invariance. PointNet uses only global pooling to form a scene-level representation, whereas PointNet++ extends this framework with hierarchical neighborhood grouping and local shared-MLP aggregation to capture fine-grained geometric structure.
 							</li>
 
 							<li>
-								<span > Transformer-based encoders</span> (Point Transformer, Point-BERT).<br>
+								<span > Transformer-based encoders</span> (Point Transformer <a href="#ref_7">[7]</a>, Point-BERT <a href="#ref_8">[8]</a>).<br>
 								Use attention mechanisms to capture long-range interactions and context-aware features. These models achieve strong accuracy but may be computationally expensive for contexts containing large number of points.
 							</li>
 
 							<li>
-								<span > Lightweight hierarchical encoders</span> (RandLA-Net). <br>
+								<span > Lightweight hierarchical encoders</span> (RandLA-Net <a href="#ref_9">[9]</a>). <br>
 								Use random down-sampling and local feature aggregation to efficiently process large numbers of points while preserving local geometric detail. This class is well-suited for large urban LiDAR datasets.
 							</li>
 
 							<li>
-								<span > Autoencoder-style encoders</span> (Point-VAE, Point-MAE, Point-BERT pretraining). <br>
+								<span > Autoencoder-style encoders</span> (Point-VAE <a href="#ref_10">[10]</a>, Point-MAE <a href="#ref_11">[11]</a>, Point-BERT pretraining). <br>
 								Learn a global latent representation by reconstructing the input point cloud. These models are effective for capturing scene-level structure and provide strong pretraining signals, but reconstruction-focused objectives focus more on semantic understanding than fine-grained geometric details needed for occlusion reasoning.
 							</li>
 						</ul>
 					</div>
 
-				</p>
-				<p>
-					Visibility prediction / ray-based occlusion learning
-
-					(NeRV, ray classification networks, shadow detection networks) — relevant because solar radiation ≈ “sun visibility probability × intensity.”
-
-					maybe other visibility work?
 				</p>
 
 				<h2 id="task" style="margin-top: 20px; margin-bottom: 10px;">Task</h2>
@@ -385,7 +379,10 @@
 				<p>
 					Urban-scale LiDAR point clouds (often containing billions of points) are partitioned into fixed-size sub-patches under computational constraints. From each sub-patch, we extract (1) context points, (2) test points, (3) a solar ray direction, and (4) binary occlusion labels indicating whether each test point is blocked along that ray. These components form the input–output pairs used to train our model.
 				</p>
-				<p> WE need some graph here </p>
+				<figure style="text-align: center;">
+				<img src="./images/Datarays-01.jpg" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure 1.</span> Data Visualization.</figcaption>
+				</figure>
 				<p>
 					The ground truth is produced via a previously developed voxelization approach, applied to each point and followed by a subsequent physics based simulation <a href="#ref_1">[1]</a>. Voxelization converts points into a three dimensional grid of cells, with each volumetric cell being solid or empty. Empty cells allow solar rays to pass through. 
 				</p>
@@ -395,21 +392,29 @@
 
 				<h2 id="architecture" style="margin-top: 20px; margin-bottom: 10px;">Overall Architecture</h2>
 				<p>
-					Our model follows a modular, encoder–classifier architecture designed to jointly reason over 3D geometry and solar direction. The point cloud encoder processes both the context cloud and the test-point cloud, producing latent representations that capture local structure, occluders, and spatial relationships relevant to ray–geometry interactions. In parallel, the ray vector is mapped into a learned embedding that serves as a directional conditioning signal. These three latent features (context, test points, and solar token) are then fused and passed to a classifier that predicts per-point occlusion.
+					Our model follows a modular, encoder–classifier architecture designed to jointly reason over 3D geometry and solar direction. The point cloud encoder processes both the context cloud and the test-point cloud, producing latent representations that capture local structure, occluders, and spatial relationships relevant to ray–geometry interactions. In parallel, the ray vector is mapped into a learned embedding that serves as a directional conditioning signal. These three latent features (context, test points, and solar token) are then passed to a classifier that predicts per-point occlusion.
 				</p>
+				<figure style="text-align: center;">
+				<img src="./images/fig2_overall-01.jpg" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure 2.</span> Overall Architecture</figcaption>
+				</figure>
 				<div class ="listing_items"> 
 					<ul>
 						<li>
 							<p>
 								<span > Point Cloud Encoder </span> <br>
-								Given the scale and density of the urban LiDAR blocks in our dataset, we adopt a RandLA-Net–style encoder, which offers an efficient hierarchical representation that preserves local geometric structure—critical for accurate ray–occlusion prediction. Because our task is not semantic segmentation, we discard RandLA-Net’s decoder and retain only the hierarchical feature extractor. Although transformer-based or generative encoders could also be applied, many are not benchmarked on large-scale urban LiDAR and require more evaluation effort; thus, we focus on the RandLA family for this project. 
+								Given the scale and density of the urban LiDAR blocks in our dataset, we adopt a RandLA-Net–style encoder <a href="#ref_9">[9]</a>, which offers an efficient hierarchical representation that effectively captures the local neighborhood geometry but scales to large point clouds. Because our task is not semantic segmentation, we discard RandLA-Net’s decoder and retain only the hierarchical feature extractor. 
 							</p>
 							<p>
 								The RandLA encoder operates through multiple hierarchical stages, each performing random sampling to reduce point count followed by Local Feature Aggregation (LFA), which aggregates geometric context from nearest neighbors using attentive pooling. This produces a multi-scale latent representation consisting of per-point features and their corresponding downsampled coordinates for both context and test point sets.
 							</p>
 							<p>
-								Following the RandLA encoding, we process the downsampled coordinates using a shared positional MLP, optionally preceded by Fourier feature embedding. The resulting positional embeddings are then fused with the RandLA features (via addition), providing each point with both learned geometric features and explicit spatial encoding.
+								Following the RandLA encoding, we process the downsampled coordinates using a shared positional MLP, optionally preceded by Fourier feature embedding. The resulting positional embeddings are then added tothe RandLA features, providing each point with both learned geometric features and spatial encoding.
 							</p>
+							<figure style="text-align: center;">
+							<img src="./images/fig3_Encoder-01.jpg" width="80%" />
+							<figcaption><span style="font-weight: 500; background-color: white;">Figure 3.</span> Point Cloud Encoder Architecture</figcaption>
+							</figure>
 							
 						</li>
 
@@ -431,12 +436,21 @@
 							</p>
 							<ol>
 								<li>
-									The first model is a lightweight MLP that predicts per-point occlusion using globally pooled context features. We follow the PointNet paradigm of using symmetric global pooling to obtain a compact context descriptor. Specifically, mean and max pooling are applied to the context features to form a scene-level embedding, which is then broadcast to all test points. Each test-point feature is concatenated with this global descriptor and passed through a lightweight MLP to produce per-point occlusion predictions.
+									The first prediction head incorporates cross-attention between context and test points to enable explicit geometric reasoning. Here, we treat the test-point features as queries and the fused context features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
+								</li>
+								<figure style="text-align: center;">
+								<img src="./images/fig4_transformer-01.jpg" width="80%" />
+								<figcaption><span style="font-weight: 500; background-color: white;">Figure 4.</span> Transformer-based Cross-Attention Head</figcaption>
+								</figure>
+								<li>
+									The second model is a lightweight MLP that predicts per-point occlusion using globally pooled context features. We follow the PointNet paradigm of using symmetric global pooling to obtain a compact context descriptor <a href="#ref_5">[5]</a>. Specifically, mean and max pooling are applied to the context features to form a scene-level embedding, which is then broadcast to all test points. Each test-point feature is concatenated with this global descriptor and passed through a lightweight MLP to produce per-point occlusion predictions.
 									<!-- The first is a lightweight MLP classifier that directly predicts per-point occlusion from the fused test-point features. We first extract the context features by applying mean pooling and max pooling over context-point features. The pooled features are concatenated and projected into a compact scene-level embedding, which is then broadcast to every test point. Each test-point feature is concatenated with this global context descriptor and passed through a small MLP to produce the final occlusion prediction. -->
 								</li>
-								<li>
-									The third prediction head incorporates cross-attention between context and test points to enable more explicit geometric reasoning. Here, we treat the test-point features as queries and the fused context features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
-								</li>
+								<figure style="text-align: center;">
+								<img src="./images/fig5_mlp-01.jpg" width="80%" />
+								<figcaption><span style="font-weight: 500; background-color: white;">Figure 5.</span> MLP-based Global Pooling Head</figcaption>
+								</figure>
+								
 							</ol>
 						</li>
 
@@ -471,21 +485,21 @@
 				First, we establish a baseline comparison to examine the inductive biases of different architectural families. We evaluate transformer-based and MLP-based encoders, each tested with and without Fourier positional embeddings. This setup allows us to assess how these modeling choices affect the model’s ability to learn a geometry-dependent occlusion function. Transformers are expected to capture longer-range interactions and contextual relationships, whereas MLPs with global pooling primarily learn coarse global structure and are less effective at modeling fine geometric detail. Adding Fourier features introduces high-frequency positional encoding that can improve sensitivity to subtle geometric variations.
 				</p>
 				<p>
-				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. For comparison with spatially aware point-based architectures, we also include a RandLA-Net encoder with three layers and a downsampling ratio of 2 at each layer (8× total reduction), using a final feature dimension of 256.
+				For the transformer-based encoder, we implement a 4-head attention module with a single cross-attention block. For the MLP-based encoder, we use a 5-layer MLP with hidden dimension 128. The RandLA-Net encoder is initialized with 3 hierarchical layers, each with 2 down-sampling ratio, and feature dimensions [16, 64, 128] respectively. The Fourier feature embeddings use 10 frequencies for point positions and 4 frequencies for the ray vector.
 				</p>
 				<p>
 				All models are trained for 20 epochs with batch size 8 using the Adam optimizer (learning rate \(1\times10^{-4}\), weight decay \(1\times10^{-5}\)). A <code>ReduceLROnPlateau</code> scheduler (mode = "min") halves the learning rate when the validation loss does not improve for 5 epochs. We evaluate performance using accuracy, precision, recall, and F1-score on the validation and test sets.
 				</p>
 				<p><span style="font-weight: 500;">Results</span></p>
 				<p>
-					Figure X shows the training and validation loss trajectories for the four model architectures. Across all models, training loss decreases smoothly and validation loss remains generally aligned, indicating no severe overfitting within 20 epochs. Fourier features consistently improve convergence, particularly for the MLP, yielding lower loss compared to their non-Fourier counterparts. However, the Fourier embeddings also introduce noticeably higher variance in the validation loss, suggesting that the added high-frequency capacity makes the models more sensitive to noise and local fluctuations during training. Overall, MLP models converge marginally more smoothly and reliably than transformer-based models, and the MLP with Fourier features attains the lowest final loss.
+					Figure 6 shows the training and validation loss trajectories for the four model architectures. Across all models, training loss decreases smoothly and validation loss remains generally aligned, indicating no severe overfitting within 20 epochs. Fourier features consistently improve convergence, particularly for the MLP, yielding lower loss compared to their non-Fourier counterparts. However, the Fourier embeddings also introduce noticeably higher variance in the validation loss, suggesting that the added high-frequency capacity makes the models more sensitive to noise and local fluctuations during training. Overall, MLP models converge marginally more smoothly and reliably than transformer-based models, and the MLP with Fourier features attains the lowest final loss.
 				</p>
 				<figure style="text-align: center;">
 				<img src="./images/training_validation_loss_comparison.png" width="80%" />
-				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves for the four model architectures.</figcaption>
+				<figcaption><span style="font-weight: 500;">Figure 6.</span> Training and validation loss curves for the four model architectures.</figcaption>
 				</figure>
 				<p>
-					Table X. summarizes the test set performance across the four model configurations. Across all four configurations, precision, recall, and F1 are nearly identical, indicating that neither the architectural family nor positional encodings meaningfully alter the classification trade-offs. The models systematically yields high recall and moderate precision, suggesting a bias towards predicting non-occluded points. 
+					Table 1. summarizes the test set performance across the four model configurations. Across all four configurations, precision, recall, and F1 are nearly identical, indicating that neither the architectural family nor positional encodings meaningfully alter the classification trade-offs. The models systematically yields high recall and moderate precision, suggesting a bias towards predicting non-occluded points. 
 				</p>
 				<div style="text-align: center; margin-top: 20px;">
 				<table 
@@ -494,14 +508,14 @@
 						margin-left: auto; 
 						margin-right: auto; 
 						text-align: center; 
-						font-size: 15px; 
+						font-size: 16px; 
 						font-weight: 300;
 						border: 1.5px solid #000;
 					"
 				>
 					
 					<caption style="caption-side: bottom; ; margin-top: 8px;">
-						<span style="font-weight: 500;">Table X.</span>  Model Performance Comparison
+						<span style="font-weight: 500;">Table 1.</span>  Model Performance Comparison
 					</caption>
 
 					<thead>
@@ -559,11 +573,11 @@
 				</table>				
 			</div>
 			<p>
-				Figure X shows one example from the test set, comparing ground-truth occlusion labels with the MLP model predictions (with Fourier features). Visually, the model captures the global occlusion patterns well, correctly identifying regional patterns. However, finer details are missed, such as the it predicts some small occluded clusters as a whole band of occuluded region. This suggests that while the model learns the overall geometry-dependent occlusion function, it struggles with fine-grained geometric reasoning, likely due to the aggressive downsampling and limited local context modeling inherent in the MLP architecture.
+				Figure 7 shows one example from the test set, comparing ground-truth occlusion labels with the MLP model predictions (with Fourier features). Visually, the model captures the global occlusion patterns well, correctly identifying regional patterns. However, finer details are missed, such as the it predicts some small occluded clusters as a whole band of occuluded region. This suggests that while the model learns the overall geometry-dependent occlusion function, it struggles with fine-grained geometric reasoning, likely due to the aggressive downsampling and limited local context modeling inherent in the MLP architecture.
 			</p>
 			<figure style="text-align: center;">
 			<img src="./images/samples_grid_basic_blog.png" width="80%" />
-			<figcaption><span style="font-weight: 500;">Figure X.</span> Testing Example with MLP + Fourier</figcaption>
+			<figcaption><span style="font-weight: 500;">Figure 7.</span> Testing Example with MLP + Fourier</figcaption>
 			</figure>
 			
 
@@ -600,7 +614,7 @@
 				>
 					<caption style="caption-side: bottom; margin-top: 8px; ">
 						<span style="font-weight: 500;">
-						Table X. </span>Comparison of RandLA-Net Encoder Configurations
+						Table 2. </span>Comparison of RandLA-Net Encoder Configurations
 					</caption>
 
 					<thead>
@@ -638,7 +652,7 @@
 				<p><span style="font-weight: 500;">Results</span></p>
 				<figure style="text-align: center;">
 				<img src="./images/training_validation_loss_comparison_2.png" width="80%" />
-				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves for the different encoder configurations.</figcaption>
+				<figcaption><span style="font-weight: 500;">Figure 8.</span> Training and validation loss curves for the different encoder configurations.</figcaption>
 				</figure>
 				<p>
 					Reducing the downsampling ratio has very different effects on the two encoder families. For the MLP encoder, providing more context points (4× vs. 8× downsampling) leads to smoother and more stable validation curves. Because the we explicitly used global pooling, its effective capacity remains limited regardless of input resolution, i.e. more points simply yield a more reliable global descriptor, making overfitting unlikely. In contrast, the transformer encoder becomes noticeably less stable at higher resolution: training loss continues to decrease while validation loss diverges. This reflects the fact that transformer cross-attention operates on local neighborhoods; increasing point density exposes the model to richer fine-grained geometric patterns and substantially increases its effective capacity, making it prone to memorizing local configurations rather than learning generalizable occlusion cues. Notably, reducing the feature dimensionality does not appear to harm performance for either architecture, further suggesting that the primary bottleneck lies in geometric information rather than representational capacity.
@@ -650,14 +664,14 @@
 						margin-left: auto; 
 						margin-right: auto; 
 						text-align: center; 
-						font-size: 15px; 
+						font-size: 16px; 
 						font-weight: 300;
 						border: 1.5px solid #000;
 					"
 				>
 					
 					<caption style="caption-side: bottom; ; margin-top: 8px;">
-						<span style="font-weight: 500;">Table X.</span>  Encoder Configuration Performance Comparison
+						<span style="font-weight: 500;">Table 3.</span>  Encoder Configuration Performance Comparison
 					</caption>
 
 					<thead>
@@ -720,17 +734,17 @@
 				</table>				
 			</div>
 			<p>
-				Beyond accuracy, reducing the downsampling ratio and feature dimensionality yields meaningful efficiency gains. As shown in Table X, moving from 8× to 4× downsampling reduces parameter counts by around 40% for both architectures, with a corresponding decrease in inference latency from ~231 ms to ~185 ms per sample (measured on a Google Colab L4 GPU). While reducing downsampling increases the number of input points, the shallower architecture and lower feature dimensions more than compensate, resulting in a net efficiency improvement. As a result, the overall model becomes smaller and faster despite operating on a denser point cloud. While the results with 4x downsampling of MLP encoders are comparable to those with 8x downsampling, the efficiency gains and stability make this configuration more favorable in practice.
+				Beyond accuracy, reducing the downsampling ratio and feature dimensionality yields meaningful efficiency gains. As shown in Table 3, moving from 8× to 4× downsampling reduces parameter counts by around 40% for both architectures, with a corresponding decrease in inference latency from ~231 ms to ~185 ms per sample (measured on a Google Colab L4 GPU). While reducing downsampling increases the number of input points, the shallower architecture and lower feature dimensions more than compensate, resulting in a net efficiency improvement. As a result, the overall model becomes smaller and faster despite operating on a denser point cloud. While the results with 4x downsampling of MLP encoders are comparable to those with 8x downsampling, the efficiency gains and stability make this configuration more favorable in practice.
 			</p>
 				<p>
-					Additional experiments with more aggressive reductions in both downsampling ratio and feature dimensionality (not shown in Table X) were conducted to assess whether the MLP encoder could be pushed to an even more compact configuration. While the losses remain stable under these more extreme settings, its performance drops noticeably and does not reach the accuracy levels achievable at 4× downsampling. Therefore, we find this configuration to be a reasonable one that yields stable performance. 
+					Additional experiments with more aggressive reductions in both downsampling ratio and feature dimensionality (not shown in Table 3) were conducted to assess whether the MLP encoder could be pushed to an even more compact configuration. While the losses remain stable under these more extreme settings, its performance drops noticeably and does not reach the accuracy levels achievable at 4× downsampling. Therefore, we find this configuration to be a reasonable one that yields stable performance. 
 				</p>
 				<figure style="text-align: center;">
 				<img src="./images/samples_grid_4downsample_blog.png" width="80%" />
-				<figcaption><span style="font-weight: 500;">Figure X.</span> Testing Example with MLP 4x Downsampling</figcaption>
+				<figcaption><span style="font-weight: 500;">Figure 9.</span> Testing Example with MLP 4x Downsampling</figcaption>
 				</figure>
 				<p>
-					We visualize the same test example from earlier in Figure X now with MLP with 4x downsampling ratio. Though it still struggles with local patterns, the confidence of the false negative is noticeably lower as indicated in the probability map. This suggests that the model is better able to capture local geometric cues that influence occlusion, even if it does not fully resolve all fine-grained details. 
+					We visualize the same test example from earlier in Figure 7 now with MLP with 4x downsampling ratio. Though it still struggles with local patterns, the confidence of the false negative is noticeably lower as indicated in the probability map. This suggests that the model is better able to capture local geometric cues that influence occlusion, even if it does not fully resolve all fine-grained details. 
 				</p>
 
 
@@ -739,7 +753,7 @@
 					Incorporating Local Geometric Bias for Fine-grained Accuracy
 				</p>
 				<p>
-					Overall, these findings indicate that the 4×-downsampling configuration offers a favorable balance between accuracy, stability, and inference efficiency. At the same time, the experiments suggest the model still struggles to fully capture the local geometric patterns. While the global pooling strategy provides a robust scene-level descriptor and serves as a relibale regularizer to prevent overfitting, it is inherently the bottleneck of the model’s capacity to reason about fine-grained geometric structure. This is particularly important for occlusion reasoning, where local surface orientations, point distributions, and small-scale features can significantly influence visibility along a ray. Therefore, in this section, we introduce and explore a local pooling mechanism adapted from PointNet++ to enhance the model’s capacity to deal with local geometric variations.
+					Overall, these findings indicate that the 4×-downsampling configuration offers a favorable balance between accuracy, stability, and inference efficiency. At the same time, the experiments suggest the model still struggles to fully capture the local geometric patterns. While the global pooling strategy provides a robust scene-level descriptor and serves as a relibale regularizer to prevent overfitting, it is inherently the bottleneck of the model’s capacity to reason about fine-grained geometric structure. This is particularly important for occlusion reasoning, where local surface orientations, point distributions, and small-scale features can significantly influence visibility along a ray. Therefore, in this section, we introduce and explore a local pooling mechanism adapted from PointNet++ to enhance the model’s capacity to deal with local geometric variations  <a href="#ref_6">[6]</a>.
 				</p>
 				<span style="font-weight: 500;">Set Up</span>
 				<p>
@@ -755,14 +769,19 @@
 				<p>
 					The final representation for each test point is the concatenation of (1) its own test-point feature, (2) the local K-NN pooled feature, and (3) the broadcast global context feature. This combined descriptor is passed through a shallow MLP head to predict per-point occlusion logits.
 				</p>
+				<figure style="text-align: center;">
+				<img src="./images/fig10_MLPlocal-01.jpg" width="80%" />
+				<figcaption><span style="font-weight: 500;">Figure 10.</span> Local Pooling Module Architecture.</figcaption>
+				</figure>
 				<span style="font-weight: 500;">Results</span>
+				
+				<p>
+					Noticeably, by introducing local pooling, the model achieves smoother and much lower training and validation loss curves, as shown in Figure 11. The local aggregation allows the model to better capture fine-grained geometric patterns that influence occlusion than relying on global features along. This leads to more stable learning dynamics and improved generalization, as evidenced by the lower validation loss throughout training.
+				</p>
 				<figure style="text-align: center;">
 				<img src="./images/training_validation_loss_comparison_final.png" width="80%" />
-				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves with vs without local pooling.</figcaption>
+				<figcaption><span style="font-weight: 500;">Figure 11.</span> Training and validation loss curves with vs without local pooling.</figcaption>
 				</figure>
-				<p>
-					Noticeably, by introducing local pooling, the model achieves smoother and much lower training and validation loss curves, as shown in Figure X. The local aggregation allows the model to better capture fine-grained geometric patterns that influence occlusion than relying on global features along. This leads to more stable learning dynamics and improved generalization, as evidenced by the lower validation loss throughout training.
-				</p>
 				
 				<div style="text-align: center; margin-top: 20px;">
 				<table 
@@ -771,14 +790,14 @@
 						margin-left: auto; 
 						margin-right: auto; 
 						text-align: center; 
-						font-size: 15px; 
+						font-size: 16px; 
 						font-weight: 300;
 						border: 1.5px solid #000;
 					"
 				>
 					
 					<caption style="caption-side: bottom; ; margin-top: 8px;">
-						<span style="font-weight: 500;">Table X.</span>  Local Pooling Performance Comparison
+						<span style="font-weight: 500;">Table 4.</span>  Local Pooling Performance Comparison
 					</caption>
 
 					<thead>
@@ -819,14 +838,14 @@
 				</table>				
 			</div>
 			<p>
-				We also report the testing performance in Table X. Since architecturally-wise, we are only introducing one shared relative position projection and local point MLP, the parameter count remains nearly identical to the baseline MLP model. However, the addition of local pooling yields consistent improvements across all metrics, including accuracy, precision, recall, and F1-score. This confirms that incorporating local geometric context enhances the model’s ability to reason about occlusion, leading to more accurate predictions without significantly increasing model complexity.
+				We also report the testing performance in Table 4. Since architecturally-wise, we are only introducing one shared relative position projection and local point MLP, the parameter count remains nearly identical to the baseline MLP model. However, the addition of local pooling yields consistent improvements across all metrics, including accuracy, precision, recall, and F1-score. This confirms that incorporating local geometric context enhances the model’s ability to reason about occlusion, leading to more accurate predictions without significantly increasing model complexity.
 			</p>
 			<figure style="text-align: center;">
 				<img src="./images/samples_grid_localPooling_blog.png" width="80%" />
-				<figcaption><span style="font-weight: 500;">Figure X.</span> Training and validation loss curves with vs without local pooling.</figcaption>
+				<figcaption><span style="font-weight: 500;">Figure 12.</span> Training and validation loss curves with vs without local pooling.</figcaption>
 				</figure>
 			<p>
-				Looking at the same test example in Figure X, we see that the model with local pooling recovers much finer details in the occlusion patterns. Many of the small occluded clusters that were previously misclassified are now correctly identified, and the overall confidence map appears much sharper and more precise. The probability map shows higher confidence in both occluded and non-occluded regions, indicating that the model is more certain about its predictions. This demonstrates that the local pooling mechanism effectively enhances the model’s sensitivity to fine-grained geometric cues that are critical for accurate occlusion reasoning.
+				Figure 12 visualize the same test example, and we see that the model with local pooling recovers much finer details in the occlusion patterns. Many of the small occluded clusters that were previously misclassified are now correctly identified, and the overall confidence map appears much sharper and more precise. The probability map shows higher confidence in both occluded and non-occluded regions, indicating that the model is more certain about its predictions. This demonstrates that the local pooling mechanism effectively enhances the model’s sensitivity to fine-grained geometric cues that are critical for accurate occlusion reasoning.
 			</p>
 				
 
@@ -890,10 +909,19 @@
 				</div>
 		    <div class="main-content-block">
 						<div class='citation' id="references" style="height:auto"><br>
-							<span style="font-size:16px">References:</span><br><br>
+							<h1>References</h1><br>
 							<a id="ref_1"></a>[1] <a target="_blank" href="https://doi.org/10.1080/19401493.2021.1971765">Calculating Solar Irradiance without Shading Geometry: a Point Cloud-based Method</a>, Bognár, Loonen, and Hensen, 2021<br><br>
 							<a id="ref_2"></a>[2] <a target="_blank" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5611022">Voxel Shader – An Efficient Shadow Calculation Approach For Urban Building Energy Modeling</a>, Su, and Dogan, 2025<br><br>
-							<a id="ref_2"></a>[2] <a href="">A Human-Level AGI</a>, OpenAI, 2025<br><br>
+							<a id="ref_3"></a>[3] <a target="_blank" href="https://doi.org/10.18086/swc.2019.45.12">A Fast Machine Learning Model for Large-Scale Estimation of Annual Solar Irradiation on Rooftops</a>, Alina Walch, Roberto Castello, Nahid Mohajeri & Jean-Louis Scartezzini, 2019<br><br>
+							<a id="ref_4"></a>[4] <a target="_blank" href="https://doi.org/10.1016/j.enbuild.2023.113743">Enhancing rooftop solar energy potential evaluation in high-density cities: A Deep Learning and GIS based approach</a>, Haozhan Ni, Daoyang Wang, Wenzhuo Zhao, Wolin Jiang, E. Mingze, Chenyu Huang, Jiawei Yao, 2024<br><br>
+							<a id="ref_5"></a>[5] <a target="_blank" href="https://doi.org/10.1109/CVPR.2017.16">PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation</a>, Qi, Su, Mo, and Guibas, 2017<br><br>
+							<a id="ref_6"></a>[6] <a target="_blank" href="https://doi.org/10.5555/3295222.3295263">PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space</a>, Qi, Yi, Su, and Guibas, 2017<br><br>
+							<a id="ref_7"></a>[7] <a target="_blank" href="https://doi.org/10.1109/ICCV48922.2021.01595">Point Transformer</a>, Zhao, Jiang, Jia, Torr, and Koltun, 2021<br><br>
+							<a id="ref_8"></a>[8] <a target="_blank" href="https://doi.org/10.1109/CVPR52688.2022.01871">Point-BERT: Pre-training 3D Point Cloud Transformers with Masked Point Modeling</a>, Yu, Tang, Rao, Huang, Zhou, and Lu, 2022<br><br>
+							<a id="ref_9"></a>[9] <a target="_blank" href="https://doi.org/10.1109/CVPR42600.2020.01112">RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds</a>, Hu, Yang, Xie, Rosa, Guo, Wang, Trigoni, and Markham, 2020<br><br>
+							<a id="ref_10"></a>[10] <a target="_blank" href="https://doi.org/10.1016/j.compmedimag.2025.102587">3D Cardiac Shape Analysis with Variational Point Cloud Autoencoders (Point VAE)</a>, Beetz, Banerjee, Li, Camps, Rodriguez, and Grau, 2025<br><br>
+							<a id="ref_11"></a>[11] <a target="_blank" href="https://doi.org/10.1007/978-3-031-20086-1_35">Point-MAE: Masked Autoencoders for Point Cloud Self-supervised Learning</a>, Pang, Wang, Tay, Liu, Tian, and Yuan, 2022<br><br>
+
 						</div>
 		    </div>
 		</div>
