@@ -1,6 +1,6 @@
-# DeepLearning_FinalProject
+# PointPROP
 
-6.7960 Deep Learning Final Project
+Parallel Ray Occlusion Prediction for Point Clouds
 
 ## Description
 
