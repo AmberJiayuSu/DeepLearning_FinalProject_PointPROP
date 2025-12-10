@@ -395,7 +395,7 @@
 					Our model follows a modular, encoder–classifier architecture designed to jointly reason over 3D geometry and solar direction. The point cloud encoder processes both the context cloud and the test-point cloud, producing latent representations that capture local structure, occluders, and spatial relationships relevant to ray–geometry interactions. In parallel, the ray vector is mapped into a learned embedding that serves as a directional conditioning signal. These three latent features (context, test points, and solar token) are then passed to a classifier that predicts per-point occlusion.
 				</p>
 				<figure style="text-align: center;">
-				<img src="./images/fig2_overall-01.jpg" width="80%" />
+				<img src="./images/fig2_overall-01.jpg" width="68%" />
 				<figcaption><span style="font-weight: 500;">Figure 2.</span> Overall Architecture</figcaption>
 				</figure>
 				<div class ="listing_items"> 
@@ -412,7 +412,7 @@
 								Following the RandLA encoding, we process the downsampled coordinates using a shared positional MLP, optionally preceded by Fourier feature embedding. The resulting positional embeddings are then added tothe RandLA features, providing each point with both learned geometric features and spatial encoding.
 							</p>
 							<figure style="text-align: center;">
-							<img src="./images/fig3_Encoder-01.jpg" width="80%" />
+							<img src="./images/fig3_Encoder-01.jpg" width="60%" />
 							<figcaption><span style="font-weight: 500; background-color: white;">Figure 3.</span> Point Cloud Encoder Architecture</figcaption>
 							</figure>
 							
@@ -421,7 +421,7 @@
 						<li>
 							<p>
 								<span > Ray Encoder </span> <br>
-								A simple MLP maps the 3D ray vector into the hidden-dimension embedding space, producing a solar token that captures directional information relevant to occlusion reasoning. Optional Fourier feature embedding with fewer frequencies than used for point positions can be applied to the ray vector prior to the MLP to enhance high-frequency directional encoding.
+								A simple MLP maps the 3D ray vector into the hidden-dimension embedding space, producing a solar token that captures directional information. Optional Fourier feature embedding with fewer frequencies can be applied to the ray vector prior to the MLP to enhance high-frequency encoding.
 							</p>
 							
 						</li>
@@ -429,17 +429,17 @@
 						<li>
 							<p>
 								<span > Classification Head </span> <br>
-								After obtaining the context points and test points features (added positional embeddings and encoded features), and solar token, we fuse them to predict per-point occlusion. Specifically, we concatenate the solar token to the context features by broadcasting the solar token across all context points. Then we concatenate the context features with the solar token and pass through a simple fead forward MLP to produce fused context features.
+								After obtaining the context points and test points features, and solar token, we then pass to classification head to predict per-point occlusion. Specifically, we concatenate the solar token to the context features by broadcasting the solar token across all context points. Then we concatenate the context features with the solar token and pass through a simple fead forward MLP to produce fused scene features.
 							</p>
 							<p>
-								We then implement two prediction heads: 
+								We implement two prediction heads: 
 							</p>
 							<ol>
 								<li>
-									The first prediction head incorporates cross-attention between context and test points to enable explicit geometric reasoning. Here, we treat the test-point features as queries and the fused context features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
+									The first prediction head incorporates cross-attention between scene and test points to enable explicit geometric reasoning. Here, we treat the test-point features as queries and the fused scene features as keys and values in a multi-head attention mechanism. This allows each test point to attend to relevant context points based on learned geometric relationships and the solar direction. The attention output is then concatenated with the original test-point features and passed through an MLP to produce the final occlusion prediction.
 								</li>
 								<figure style="text-align: center;">
-								<img src="./images/fig4_transformer-01.jpg" width="80%" />
+								<img src="./images/fig4_transformer-01.jpg" width="65%" />
 								<figcaption><span style="font-weight: 500; background-color: white;">Figure 4.</span> Transformer-based Cross-Attention Head</figcaption>
 								</figure>
 								<li>
@@ -447,7 +447,7 @@
 									<!-- The first is a lightweight MLP classifier that directly predicts per-point occlusion from the fused test-point features. We first extract the context features by applying mean pooling and max pooling over context-point features. The pooled features are concatenated and projected into a compact scene-level embedding, which is then broadcast to every test point. Each test-point feature is concatenated with this global context descriptor and passed through a small MLP to produce the final occlusion prediction. -->
 								</li>
 								<figure style="text-align: center;">
-								<img src="./images/fig5_mlp-01.jpg" width="80%" />
+								<img src="./images/fig5_mlp-01.jpg" width="100%" />
 								<figcaption><span style="font-weight: 500; background-color: white;">Figure 5.</span> MLP-based Global Pooling Head</figcaption>
 								</figure>
 								
