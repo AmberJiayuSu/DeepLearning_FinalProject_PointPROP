@@ -337,10 +337,7 @@
 								Use random down-sampling and local feature aggregation to efficiently process large numbers of points while preserving local geometric detail. This class is well-suited for large urban LiDAR datasets.
 							</li>
 
-							<li>
-								<span > Autoencoder-style encoders</span> (Point-VAE <a href="#ref_10">[10]</a>, Point-MAE <a href="#ref_11">[11]</a>, Point-BERT pretraining). <br>
-								Learn a global latent representation by reconstructing the input point cloud. These models are effective for capturing scene-level structure and provide strong pretraining signals, but reconstruction-focused objectives focus more on semantic understanding than fine-grained geometric details needed for occlusion reasoning.
-							</li>
+							
 						</ul>
 					</div>
 
@@ -364,10 +361,10 @@
 		    </div>
 		</div>
 
-		<div class="content-margin-container" >
+		<div class="content-margin-container"  id="experiments" >
 				<div class="margin-left-block">
 				</div>
-		    <div class="main-content-block" id="experiments">
+		    <div class="main-content-block">
 				<h1>Experiments</h1>
 				<h2 id="data" style="margin-top: 20px; margin-bottom: 10px;">Data</h2>
 				<p>
@@ -895,8 +892,6 @@
 							<a id="ref_7"></a>[7] <a target="_blank" href="https://doi.org/10.1109/ICCV48922.2021.01595">Point Transformer</a>, Zhao, Jiang, Jia, Torr, and Koltun, 2021<br><br>
 							<a id="ref_8"></a>[8] <a target="_blank" href="https://doi.org/10.1109/CVPR52688.2022.01871">Point-BERT: Pre-training 3D Point Cloud Transformers with Masked Point Modeling</a>, Yu, Tang, Rao, Huang, Zhou, and Lu, 2022<br><br>
 							<a id="ref_9"></a>[9] <a target="_blank" href="https://doi.org/10.1109/CVPR42600.2020.01112">RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds</a>, Hu, Yang, Xie, Rosa, Guo, Wang, Trigoni, and Markham, 2020<br><br>
-							<a id="ref_10"></a>[10] <a target="_blank" href="https://doi.org/10.1016/j.compmedimag.2025.102587">3D Cardiac Shape Analysis with Variational Point Cloud Autoencoders (Point VAE)</a>, Beetz, Banerjee, Li, Camps, Rodriguez, and Grau, 2025<br><br>
-							<a id="ref_11"></a>[11] <a target="_blank" href="https://doi.org/10.1007/978-3-031-20086-1_35">Point-MAE: Masked Autoencoders for Point Cloud Self-supervised Learning</a>, Pang, Wang, Tay, Liu, Tian, and Yuan, 2022<br><br>
 
 						</div>
 		    </div>
